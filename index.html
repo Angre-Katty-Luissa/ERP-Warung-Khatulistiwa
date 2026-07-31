@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ERP Warung Khatulistiwa - CRUD Version</title>
+    <title>ERP Warung Khatulistiwa - Confirm Version</title>
     
     <!-- Library untuk Ekspor Excel, PDF, dan Grafik (Chart.js) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -46,7 +46,6 @@
         .btn-sync { background-color: #f39c12; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px;}
         .btn-danger { background-color: #e74c3c; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px;}
         
-        /* Tombol Aksi Tabel */
         .btn-action-container { display: flex; gap: 5px; }
         .btn-print { background-color: #8e44ad; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold;}
         .btn-edit { background-color: #f39c12; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold;}
@@ -194,7 +193,7 @@
                     <div class="form-group"><label>Status</label><select id="trxStatus"><option>Sukses</option><option>Pending</option><option>Batal</option></select></div>
                     <div class="form-group"><label>TOTAL BAYAR (Rp)</label><input type="number" id="trxTotal" readonly style="color: #c0392b; font-size: 16px;"></div>
                 </div>
-                <button class="btn-submit" onclick="simpanTransaksi()">Simpan & Cetak Struk</button>
+                <button class="btn-submit" onclick="konfirmasiSimpan('transaksi')">Simpan & Cetak Struk</button>
                 <div class="export-container"><button class="btn-excel" onclick="eksporExcel('transaksi')">📊 Excel</button><button class="btn-pdf" onclick="eksporPDF('transaksi')">📄 PDF</button></div>
                 <div class="table-responsive"><table><thead><tr><th>No TRX</th><th>Waktu</th><th>Nama</th><th>Total</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="tabelTransaksi"></tbody></table></div>
                 <div id="area-struk" style="display:none;">
@@ -216,7 +215,7 @@
                     <div class="form-group"><label>Sinkronisasi</label><button class="btn-sync" onclick="tarikDataOtomatis()">🔄 Tarik Data</button></div>
                     <div class="form-group"><label>Jml Pelanggan</label><input type="number" id="opJmlPelanggan"></div>
                 </div>
-                <button class="btn-submit" onclick="simpanOperasi()">Simpan Operasional</button>
+                <button class="btn-submit" onclick="konfirmasiSimpan('operasi')">Simpan Operasional</button>
                 <div class="export-container"><button class="btn-excel" onclick="eksporExcel('operasi')">📊 Excel</button><button class="btn-pdf" onclick="eksporPDF('operasi')">📄 PDF</button></div>
                 <div class="table-responsive"><table><thead><tr><th>Tanggal</th><th>Hari</th><th>Status</th><th>Buka-Tutup</th><th>Pelanggan</th><th>Aksi</th></tr></thead><tbody id="tabelOperasi"></tbody></table></div>
             </div>
@@ -243,7 +242,7 @@
                         <div class="form-group"><label>Fee Warung</label><input type="number" id="plDigFee" oninput="hitungAdminDig()"></div>
                         <div class="form-group"><label>TOTAL ADMIN</label><input type="number" id="plDigTotalAdmin" readonly></div>
                     </div>
-                    <button class="btn-submit" onclick="simpanPLDigital()">Simpan Digital</button>
+                    <button class="btn-submit" onclick="konfirmasiSimpan('pl_digital')">Simpan Digital</button>
                     <div class="export-container"><button class="btn-excel" onclick="eksporExcel('pl_digital')">📊 Excel</button><button class="btn-pdf" onclick="eksporPDF('pl_digital')">📄 PDF</button></div>
                     <div class="table-responsive"><table><thead><tr><th>Kode</th><th>Nama Produk</th><th>Jenis</th><th>Nominal</th><th>Admin</th><th>Aksi</th></tr></thead><tbody id="tabelPLDigital"></tbody></table></div>
                 </div>
@@ -264,7 +263,7 @@
                         <div class="form-group"><label>Laba (Rp)</label><input type="number" id="plNonLabaRp" readonly></div>
                         <div class="form-group"><label>Supplier</label><input type="text" id="plNonSupplier"></div>
                     </div>
-                    <button class="btn-submit" onclick="simpanPLNonDigital()">Simpan Fisik</button>
+                    <button class="btn-submit" onclick="konfirmasiSimpan('pl_nondigital')">Simpan Fisik</button>
                     <div class="export-container"><button class="btn-excel" onclick="eksporExcel('pl_nondigital')">📊 Excel</button><button class="btn-pdf" onclick="eksporPDF('pl_nondigital')">📄 PDF</button></div>
                     <div class="table-responsive"><table><thead><tr><th>Kode</th><th>Nama</th><th>Jenis</th><th>Beli</th><th>Jual</th><th>Laba</th><th>Aksi</th></tr></thead><tbody id="tabelPLNonDigital"></tbody></table></div>
                 </div>
@@ -280,7 +279,7 @@
                     <div class="form-group"><label>Qty</label><input type="number" id="stokQty" value="1"></div>
                     <div class="form-group"><label>Keterangan</label><input type="text" id="stokKet"></div>
                 </div>
-                <button class="btn-submit" onclick="simpanLogStok()">Catat Stok</button>
+                <button class="btn-submit" onclick="konfirmasiSimpan('stok')">Catat Stok</button>
                 <div class="export-container"><button class="btn-excel" onclick="eksporExcel('stok')">📊 Excel</button><button class="btn-pdf" onclick="eksporPDF('stok')">📄 PDF</button></div>
                 <h2>Log Arus Stok</h2>
                 <div class="table-responsive"><table><thead><tr><th>Waktu</th><th>Kode</th><th>Nama</th><th>Jenis</th><th>Qty</th><th>Ket</th><th>Aksi</th></tr></thead><tbody id="tabelStokLog"></tbody></table></div>
@@ -304,7 +303,7 @@
                     <div class="form-group"><label>Nominal (Rp)</label><input type="number" id="pengNominal"></div>
                     <div class="form-group"><label>Keterangan</label><input type="text" id="pengKeterangan"></div>
                 </div>
-                <button class="btn-danger" onclick="simpanPengeluaran()">Catat Pengeluaran</button>
+                <button class="btn-danger" onclick="konfirmasiSimpan('pengeluaran')">Catat Pengeluaran</button>
                 <div class="table-responsive"><table><thead><tr><th>Waktu</th><th>Kategori</th><th>Nominal</th><th>Ket</th><th>Aksi</th></tr></thead><tbody id="tabelPengeluaran"></tbody></table></div>
             </div>
 
@@ -408,6 +407,20 @@
             document.getElementById('view-' + jenis).classList.add('active'); btn.classList.add('active');
         }
 
+        // --- KONFIRMASI SIMPAN (SIMPAN / CANCEL) ---
+        function konfirmasiSimpan(modul) {
+            if (confirm("Apakah Anda yakin ingin menyimpan data ini?")) {
+                if (modul === 'transaksi') eksekusiSimpanTransaksi();
+                else if (modul === 'operasi') eksekusiSimpanOperasi();
+                else if (modul === 'pl_digital') eksekusiSimpanPLDigital();
+                else if (modul === 'pl_nondigital') eksekusiSimpanPLNonDigital();
+                else if (modul === 'stok') eksekusiSimpanLogStok();
+                else if (modul === 'pengeluaran') eksekusiSimpanPengeluaran();
+            } else {
+                alert("Penyimpanan dibatalkan.");
+            }
+        }
+
         function generateKodeDigital() {
             let nama = document.getElementById('plDigNama').value.trim().toUpperCase();
             let kode = nama.replace(/[^A-Z0-9]/g, '').substring(0, 6) + '-' + Math.floor(10 + Math.random() * 90);
@@ -472,8 +485,8 @@
             }
         }
 
-        // --- CRUD TRANSAKSI ---
-        function simpanTransaksi() {
+        // --- TRANSAKSI ---
+        function eksekusiSimpanTransaksi() {
             let no = document.getElementById('trxNo').value;
             let namaVal = document.getElementById('trxNama').value.trim();
             if(!namaVal) namaVal = "Lain-lain";
@@ -566,7 +579,7 @@
             doc.save(`Dashboard-${tglHariIni}.pdf`);
         }
 
-        // --- CRUD OPERASI ---
+        // --- OPERASI ---
         document.getElementById('opTanggal').value = tglHariIni;
         function setHariOtomatis() { const namaHari=["Minggu","Senin","Selasa","Rabu","Kamis","Jumat","Sabtu"]; document.getElementById('opHari').value = namaHari[new Date(document.getElementById('opTanggal').value).getDay()]; } setHariOtomatis();
         function tarikDataOtomatis() {
@@ -576,7 +589,7 @@
                 document.getElementById('opJmlPelanggan').value = j; alert("Data pelanggan: "+j);
             });
         }
-        function simpanOperasi() {
+        function eksekusiSimpanOperasi() {
             let tg=document.getElementById('opTanggal').value;
             db.ref('warung/operasi/'+tg).set({ tgl:tg, hari:document.getElementById('opHari').value, status:document.getElementById('opStatus').value, buka:document.getElementById('opBuka').value||"-", tutup:document.getElementById('opTutup').value||"-", pel:document.getElementById('opJmlPelanggan').value||0 }).then(()=>alert("Disimpan!"));
         }
@@ -597,9 +610,9 @@
             if(snap.child(tglHariIni).exists()) document.getElementById('dashStatus').innerText = snap.child(tglHariIni).val().status;
         });
 
-        // --- CRUD PRICE LIST DIGITAL ---
+        // --- PRICE LIST DIGITAL ---
         function hitungAdminDig() { let a=parseInt(document.getElementById('plDigAdminApp').value)||0, b=parseInt(document.getElementById('plDigAdminBank').value)||0, c=parseInt(document.getElementById('plDigFee').value)||0; document.getElementById('plDigTotalAdmin').value = a+b+c; }
-        function simpanPLDigital() {
+        function eksekusiSimpanPLDigital() {
             let k=document.getElementById('plDigKode').value, nama=document.getElementById('plDigNama').value; if(!k || !nama) return alert("Lengkapi data!");
             db.ref('warung/pricelist/digital/'+k).set({ kode:k, nama:nama, jenis:document.getElementById('plDigJenis').value, nominal:document.getElementById('plDigNominal').value||0, total:document.getElementById('plDigTotalAdmin').value }).then(()=>{ document.getElementById('plDigNama').value=''; document.getElementById('plDigKode').value=''; document.getElementById('plDigNominal').value=''; alert("Disimpan"); });
         }
@@ -626,8 +639,8 @@
             datalistKasir.innerHTML = listHtml;
         });
 
-        // --- CRUD PRICE LIST NON-DIGITAL ---
-        function simpanPLNonDigital() {
+        // --- PRICE LIST NON-DIGITAL ---
+        function eksekusiSimpanPLNonDigital() {
             let k=document.getElementById('plNonKode').value, nama=document.getElementById('plNonNama').value; if(!k || !nama) return alert("Lengkapi data!");
             db.ref('warung/pricelist/nondigital/'+k).set({ kode:k, nama:nama, jenis:document.getElementById('plNonJenis').value, beli:document.getElementById('plNonBeli').value, jual:document.getElementById('plNonJual').value, laba:document.getElementById('plNonLabaRp').value, supplier:document.getElementById('plNonSupplier').value }).then(()=>{ document.getElementById('plNonNama').value=''; document.getElementById('plNonKode').value=''; document.getElementById('plNonBeli').value=''; document.getElementById('plNonJual').value=''; document.getElementById('plNonLabaRp').value=''; alert("Disimpan"); });
         }
@@ -658,9 +671,9 @@
             datalistKasir.innerHTML = listHtml;
         });
 
-        // --- CRUD ARUS STOK ---
+        // --- ARUS STOK ---
         document.getElementById('stokWaktu').value = WaktuLokal();
-        function simpanLogStok() {
+        function eksekusiSimpanLogStok() {
             let k=document.getElementById('stokProduk').value, qty=parseInt(document.getElementById('stokQty').value)||0, jen=document.getElementById('stokJenis').value, idLog="LOG-"+new Date().getTime();
             if(!k || qty<=0) return alert("Pilih produk & Qty!");
             db.ref('warung/stok_log/'+idLog).set({ id:idLog, waktu:document.getElementById('stokWaktu').value, kode:k, nama:masterProduk[k], jenis:jen, qty:qty, ket:document.getElementById('stokKet').value }).then(()=>{
@@ -698,10 +711,10 @@
             document.getElementById('dashStokList').innerHTML = c>0 ? alrt : '<li style="color:green">Aman</li>';
         });
 
-        // --- CRUD PENGELUARAN ---
+        // --- PENGELUARAN ---
         document.getElementById('pengWaktu').value = WaktuLokal();
         let totalPengG=0; let dataPengeluaranGlobal = [];
-        function simpanPengeluaran() {
+        function eksekusiSimpanPengeluaran() {
             let n=parseInt(document.getElementById('pengNominal').value)||0, id="OUT-"+new Date().getTime();
             if(n<=0) return;
             db.ref('warung/pengeluaran/'+id).set({ id:id, waktu:document.getElementById('pengWaktu').value, kat:document.getElementById('pengKategori').value, nom:n, ket:document.getElementById('pengKeterangan').value }).then(()=>{ document.getElementById('pengNominal').value=''; document.getElementById('pengKeterangan').value=''; alert("Dicatat"); });
