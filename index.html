@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ERP Warung Khatulistiwa - Fully Responsive</title>
+    <title>ERP Warung Khatulistiwa - Ultimate Version</title>
     
     <!-- Library untuk Ekspor Excel, PDF, dan Grafik (Chart.js) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -15,7 +15,6 @@
         * { box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background-color: #f4f7f6; color: #333; display: flex; flex-direction: row; min-height: 100vh; }
         
-        /* Halaman Login Overlay */
         #login-container { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #2c3e50; display: flex; justify-content: center; align-items: center; z-index: 9999; padding: 20px; }
         .login-box { background: white; padding: 30px; border-radius: 8px; width: 100%; max-width: 320px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); text-align: center; }
         .login-box h2 { margin-top: 0; color: #2c3e50; border: none; }
@@ -23,16 +22,13 @@
         .login-box button { width: 100%; padding: 12px; background: #27ae60; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 10px; }
         #login-error { color: #e74c3c; font-size: 12px; margin-top: 10px; font-weight: bold; }
 
-        /* App Wrapper */
         #app-container { display: none; width: 100%; display: flex; flex-direction: row; }
 
-        /* Sidebar Styling */
         .sidebar { width: 260px; background-color: #2c3e50; color: white; height: 100vh; padding-top: 20px; position: fixed; overflow-y: auto; z-index: 1000; left: 0; top: 0; transition: 0.3s; }
         .sidebar h2 { text-align: center; font-size: 18px; border-bottom: 1px solid #34495e; padding-bottom: 15px; margin-bottom: 0; color: #ffffff !important; }
         .menu-btn { width: 100%; padding: 14px 20px; background: none; border: none; color: #bdc3c7; text-align: left; cursor: pointer; font-size: 14px; transition: 0.3s; }
         .menu-btn:hover, .menu-btn.active { background-color: #34495e; color: white; border-left: 4px solid #3498db; }
         
-        /* Main Content Layout */
         .main-content { margin-left: 260px; padding: 20px; width: calc(100% - 260px); box-sizing: border-box; min-height: 100vh; }
         .page, .sub-page { display: none; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); width: 100%; }
         .page.active, .sub-page.active { display: block; }
@@ -40,11 +36,10 @@
         h1 { border-bottom: 2px solid #3498db; padding-bottom: 10px; color: #2980b9; margin-top: 0; font-size: 20px;}
         h2 { color: #2c3e50; font-size: 16px; border-bottom: 1px dashed #ccc; padding-bottom: 5px;}
         
-        /* Grid Sistem Responsif */
         .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 20px; }
         .form-group { display: flex; flex-direction: column; }
         .form-group label { font-size: 11px; font-weight: bold; margin-bottom: 5px; color: #7f8c8d; }
-        .form-group input, .form-group select { padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; width: 100%; }
+        .form-group input, .form-group select, .form-group datalist { padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; width: 100%; }
         .form-group input[readonly] { background-color: #ecf0f1; font-weight: bold; }
         
         .btn-submit { background-color: #27ae60; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px;}
@@ -57,7 +52,6 @@
         .btn-excel { background-color: #27ae60; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold; }
         .btn-pdf { background-color: #c0392b; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold; }
 
-        /* Tabel & Wrapper Scroll */
         .table-responsive { width: 100%; overflow-x: auto; margin-top: 15px; -webkit-overflow-scrolling: touch; }
         table { width: 100%; border-collapse: collapse; min-width: 500px; font-size: 12px; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; white-space: nowrap; }
@@ -89,7 +83,6 @@
         .chart-view { display: none; width: 100%; }
         .chart-view.active { display: block; }
 
-        /* Media Query untuk Layar Tablet & HP (Maksimal 900px) */
         @media screen and (max-width: 900px) {
             body { flex-direction: column; }
             #app-container { flex-direction: column; }
@@ -98,7 +91,6 @@
             .menu-btn { width: auto; padding: 8px 12px; font-size: 12px; border-left: none !important; border-bottom: 3px solid transparent; }
             .menu-btn.active { border-bottom: 3px solid #3498db; background-color: #34495e; }
             .btn-logout { width: 90%; margin: 10px auto; }
-            
             .main-content { margin-left: 0; width: 100%; padding: 10px; }
         }
 
@@ -141,6 +133,7 @@
         <div class="main-content">
             <div id="status-db">Menghubungkan ke database...</div>
 
+            <!-- DASHBOARD -->
             <div id="dashboard" class="page active">
                 <h1>Dashboard & Grafik</h1>
                 <p style="color: #7f8c8d; font-weight: bold; font-size: 13px;">📅 Hari Ini: <span id="dashTanggal"></span></p>
@@ -171,6 +164,7 @@
                 </div>
             </div>
 
+            <!-- KASIR & TRANSAKSI -->
             <div id="transaksi" class="page">
                 <h1>Form Kasir & History</h1>
                 <div class="form-grid">
@@ -178,8 +172,14 @@
                     <div class="form-group"><label>Tanggal & Waktu</label><input type="datetime-local" id="trxTanggal"></div>
                     <div class="form-group"><label>Pelanggan</label><select id="trxPelanggan"><option>Umum</option><option>Keluarga</option><option>Pribadi</option></select></div>
                     <div class="form-group"><label>Media</label><select id="trxMedia"><option>Warung</option><option>Agen Mandiri</option><option>Gopay</option><option>Tokopedia</option></select></div>
-                    <div class="form-group"><label>Nama Transaksi</label><input type="text" id="trxNama" required></div>
-                    <div class="form-group"><label>Qty</label><input type="number" id="trxQty" value="1"></div>
+                    
+                    <div class="form-group">
+                        <label>Nama Transaksi / Produk</label>
+                        <input list="listProdukKasir" id="trxNama" placeholder="Cari atau ketik nama produk..." oninput="cekPilihanProdukKasir()">
+                        <datalist id="listProdukKasir"></datalist>
+                    </div>
+
+                    <div class="form-group"><label>Qty</label><input type="number" id="trxQty" value="1" oninput="hitungTotal()"></div>
                     <div class="form-group"><label>Nominal (Rp)</label><input type="number" id="trxNominal" oninput="hitungTotal()"></div>
                     <div class="form-group"><label>Admin (Rp)</label><input type="number" id="trxAdmin" oninput="hitungTotal()"></div>
                     <div class="form-group"><label>Diskon (Rp)</label><input type="number" id="trxDiskon" oninput="hitungTotal()"></div>
@@ -197,6 +197,7 @@
                 </div>
             </div>
 
+            <!-- WAKTU OPERASI -->
             <div id="operasi" class="page">
                 <h1>Waktu Operasi</h1>
                 <div class="form-grid">
@@ -213,13 +214,23 @@
                 <div class="table-responsive"><table><thead><tr><th>Tanggal</th><th>Hari</th><th>Status</th><th>Buka-Tutup</th><th>Pelanggan</th></tr></thead><tbody id="tabelOperasi"></tbody></table></div>
             </div>
 
+            <!-- PRICE LIST -->
             <div id="pricelist" class="page">
                 <h1>Price List</h1>
                 <div class="tab-container"><button class="tab-btn active" onclick="bukaSubTab('digital', this)">🌐 Digital</button><button class="tab-btn" onclick="bukaSubTab('nondigital', this)">📦 Non-Digital</button></div>
+                
+                <!-- Digital Sub-Tab -->
                 <div id="digital" class="sub-page active">
                     <div class="form-grid">
-                        <div class="form-group"><label>Kode</label><input type="text" id="plDigKode" placeholder="GOPAY-50"></div>
-                        <div class="form-group"><label>Jenis</label><select id="plDigJenis"><option>e-Wallet</option><option>Pulsa</option></select></div>
+                        <div class="form-group"><label>Nama Produk</label><input type="text" id="plDigNama" placeholder="Contoh: Telkomsel 10rb" oninput="generateKodeDigital()"></div>
+                        <div class="form-group"><label>Kode (Otomatis)</label><input type="text" id="plDigKode" readonly></div>
+                        <div class="form-group">
+                            <label>Jenis</label>
+                            <select id="plDigJenis">
+                                <option>E-Money</option><option>E-Wallet</option><option>Pulsa</option><option>Paket Data</option><option>Token</option><option>Angsuran Pinjaman</option><option>Transfer Bank</option><option>Tarik Tunai</option>
+                            </select>
+                        </div>
+                        <div class="form-group"><label>Nominal (Rp)</label><input type="number" id="plDigNominal"></div>
                         <div class="form-group"><label>Admin App</label><input type="number" id="plDigAdminApp" oninput="hitungAdminDig()"></div>
                         <div class="form-group"><label>Admin Bank</label><input type="number" id="plDigAdminBank" oninput="hitungAdminDig()"></div>
                         <div class="form-group"><label>Fee Warung</label><input type="number" id="plDigFee" oninput="hitungAdminDig()"></div>
@@ -227,23 +238,32 @@
                     </div>
                     <button class="btn-submit" onclick="simpanPLDigital()">Simpan Digital</button>
                     <div class="export-container"><button class="btn-excel" onclick="eksporExcel('pl_digital')">📊 Excel</button><button class="btn-pdf" onclick="eksporPDF('pl_digital')">📄 PDF</button></div>
-                    <div class="table-responsive"><table><thead><tr><th>Kode</th><th>Jenis</th><th>Admin</th></tr></thead><tbody id="tabelPLDigital"></tbody></table></div>
+                    <div class="table-responsive"><table><thead><tr><th>Kode</th><th>Nama Produk</th><th>Jenis</th><th>Nominal</th><th>Admin</th></tr></thead><tbody id="tabelPLDigital"></tbody></table></div>
                 </div>
+
+                <!-- Non-Digital Sub-Tab -->
                 <div id="nondigital" class="sub-page">
                     <div class="form-grid">
-                        <div class="form-group"><label>Kode</label><input type="text" id="plNonKode" placeholder="BRS-5KG"></div>
-                        <div class="form-group"><label>Nama Produk</label><input type="text" id="plNonNama"></div>
-                        <div class="form-group"><label>Harga Beli</label><input type="number" id="plNonBeli" oninput="hitungLabaNon()"></div>
-                        <div class="form-group"><label>Harga Jual</label><input type="number" id="plNonJual" oninput="hitungLabaNon()"></div>
-                        <div class="form-group"><label>Laba (Rp)</label><input type="number" id="plNonLabaRp" readonly></div>
+                        <div class="form-group"><label>Nama Produk</label><input type="text" id="plNonNama" placeholder="Contoh: Beras Ramos 5Kg" oninput="generateKodeNonDigital()"></div>
+                        <div class="form-group"><label>Kode (Otomatis)</label><input type="text" id="plNonKode" readonly></div>
+                        <div class="form-group">
+                            <label>Jenis</label>
+                            <select id="plNonJenis">
+                                <option>Makanan</option><option>Minuman</option><option>Kartu E-money</option><option>Lain-Lain</option>
+                            </select>
+                        </div>
+                        <div class="form-group"><label>Harga Beli (Rp)</label><input type="number" id="plNonBeli" oninput="hitungLabaNonDigital()"></div>
+                        <div class="form-group"><label>Laba (%)</label><input type="number" id="plNonLabaPersen" placeholder="Contoh: 15" oninput="hitungLabaNonDigital()"></div>
+                        <div class="form-group"><label>Harga Jual (Rp)</label><input type="number" id="plNonJual" readonly></div>
                         <div class="form-group"><label>Supplier</label><input type="text" id="plNonSupplier"></div>
                     </div>
                     <button class="btn-submit" onclick="simpanPLNonDigital()">Simpan Fisik</button>
                     <div class="export-container"><button class="btn-excel" onclick="eksporExcel('pl_nondigital')">📊 Excel</button><button class="btn-pdf" onclick="eksporPDF('pl_nondigital')">📄 PDF</button></div>
-                    <div class="table-responsive"><table><thead><tr><th>Kode</th><th>Nama</th><th>Beli</th><th>Jual</th><th>Laba</th></tr></thead><tbody id="tabelPLNonDigital"></tbody></table></div>
+                    <div class="table-responsive"><table><thead><tr><th>Kode</th><th>Nama</th><th>Jenis</th><th>Beli</th><th>Laba (%)</th><th>Jual</th></tr></thead><tbody id="tabelPLNonDigital"></tbody></table></div>
                 </div>
             </div>
 
+            <!-- ARUS STOK -->
             <div id="stok" class="page">
                 <h1>Arus Stok</h1>
                 <div class="form-grid">
@@ -259,6 +279,7 @@
                 <div class="table-responsive"><table><thead><tr><th>Kode</th><th>Nama</th><th>Sisa</th></tr></thead><tbody id="tabelStokTotal"></tbody></table></div>
             </div>
 
+            <!-- KEUANGAN -->
             <div id="keuangan" class="page">
                 <h1>Laporan Keuangan</h1>
                 <div class="dash-grid">
@@ -278,6 +299,7 @@
                 <div class="table-responsive"><table><thead><tr><th>Waktu</th><th>Kategori</th><th>Nominal</th><th>Ket</th></tr></thead><tbody id="tabelPengeluaran"></tbody></table></div>
             </div>
 
+            <!-- AKUNTANSI -->
             <div id="akuntansi" class="page">
                 <h1>Akuntansi & Laporan Formal</h1>
                 <div class="export-container" style="margin-bottom: 20px;">
@@ -308,8 +330,7 @@
         // ==========================================
         // 🔴 PASTE CONFIG FIREBASE ANDA DI BAWAH INI
         // ==========================================
-        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
+        const firebaseConfig = {
   apiKey: "AIzaSyDXOv7NwBg3wuSaJLIP9iyXKZLGb6wDxmI",
   authDomain: "erp-warung-khatulistiwa.firebaseapp.com",
   databaseURL: "https://erp-warung-khatulistiwa-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -362,6 +383,26 @@ const firebaseConfig = {
             document.getElementById('view-' + jenis).classList.add('active'); btn.classList.add('active');
         }
 
+        // --- GENERATE KODE OTOMATIS ---
+        function generateKodeDigital() {
+            let nama = document.getElementById('plDigNama').value.trim().toUpperCase();
+            let kode = nama.replace(/[^A-Z0-9]/g, '').substring(0, 6) + '-' + Math.floor(10 + Math.random() * 90);
+            document.getElementById('plDigKode').value = nama ? kode : '';
+        }
+
+        function generateKodeNonDigital() {
+            let nama = document.getElementById('plNonNama').value.trim().toUpperCase();
+            let kode = nama.replace(/[^A-Z0-9]/g, '').substring(0, 6) + '-' + Math.floor(10 + Math.random() * 90);
+            document.getElementById('plNonKode').value = nama ? kode : '';
+        }
+
+        function hitungLabaNonDigital() {
+            let beli = parseFloat(document.getElementById('plNonBeli').value) || 0;
+            let persentase = parseFloat(document.getElementById('plNonLabaPersen').value) || 0;
+            let jual = beli + (beli * (persentase / 100));
+            document.getElementById('plNonJual').value = Math.round(jual);
+        }
+
         const d = new Date();
         const tglHariIni = d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,'0') + "-" + String(d.getDate()).padStart(2,'0');
         document.getElementById('dashTanggal').innerText = d.toLocaleDateString('id-ID', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
@@ -398,14 +439,25 @@ const firebaseConfig = {
             let t = n+a-d; document.getElementById('trxTotal').value = t>0?t:0;
         }
 
+        let daftarHargaProduk = {};
+        function cekPilihanProdukKasir() {
+            let val = document.getElementById('trxNama').value;
+            if(daftarHargaProduk[val]) {
+                document.getElementById('trxNominal').value = daftarHargaProduk[val];
+                hitungTotal();
+            }
+        }
+
         function simpanTransaksi() {
+            let namaVal = document.getElementById('trxNama').value.trim();
+            if(!namaVal) namaVal = "Lain-lain";
+            
             const dataTrx = {
-                no_trx: document.getElementById('trxNo').value, waktu: document.getElementById('trxTanggal').value, pelanggan: document.getElementById('trxPelanggan').value, nama: document.getElementById('trxNama').value, total_bayar: parseInt(document.getElementById('trxTotal').value)||0, status: document.getElementById('trxStatus').value
+                no_trx: document.getElementById('trxNo').value, waktu: document.getElementById('trxTanggal').value, pelanggan: document.getElementById('trxPelanggan').value, nama: namaVal, total_bayar: parseInt(document.getElementById('trxTotal').value)||0, status: document.getElementById('trxStatus').value
             };
-            if(!dataTrx.nama) return alert("Nama transaksi kosong!");
             db.ref('warung/transaksi/'+dataTrx.no_trx).set(dataTrx).then(()=>{
                 cetakStruk(dataTrx.no_trx, dataTrx.waktu, dataTrx.pelanggan, dataTrx.nama, dataTrx.total_bayar);
-                document.getElementById('trxNama').value=''; document.getElementById('trxTotal').value=''; setFormTrx();
+                document.getElementById('trxNama').value=''; document.getElementById('trxNominal').value=''; document.getElementById('trxTotal').value=''; setFormTrx();
             });
         }
 
@@ -495,26 +547,44 @@ const firebaseConfig = {
             if(snap.child(tglHariIni).exists()) document.getElementById('dashStatus').innerText = snap.child(tglHariIni).val().status;
         });
 
+        // Price List Digital
         function hitungAdminDig() { let a=parseInt(document.getElementById('plDigAdminApp').value)||0, b=parseInt(document.getElementById('plDigAdminBank').value)||0, c=parseInt(document.getElementById('plDigFee').value)||0; document.getElementById('plDigTotalAdmin').value = a+b+c; }
         function simpanPLDigital() {
-            let k=document.getElementById('plDigKode').value; if(!k) return;
-            db.ref('warung/pricelist/digital/'+k).set({ kode:k, jenis:document.getElementById('plDigJenis').value, total:document.getElementById('plDigTotalAdmin').value }).then(()=>{ document.getElementById('plDigKode').value=''; alert("Disimpan"); });
+            let k=document.getElementById('plDigKode').value, nama=document.getElementById('plDigNama').value; if(!k || !nama) return alert("Lengkapi data!");
+            db.ref('warung/pricelist/digital/'+k).set({ kode:k, nama:nama, jenis:document.getElementById('plDigJenis').value, nominal:document.getElementById('plDigNominal').value||0, total:document.getElementById('plDigTotalAdmin').value }).then(()=>{ document.getElementById('plDigNama').value=''; document.getElementById('plDigKode').value=''; document.getElementById('plDigNominal').value=''; alert("Disimpan"); });
         }
-        function hitungLabaNon() { let b=parseInt(document.getElementById('plNonBeli').value)||0, j=parseInt(document.getElementById('plNonJual').value)||0; document.getElementById('plNonLabaRp').value = (j>0&&b>0)?j-b:0; }
+        db.ref('warung/pricelist/digital').on('value', snap => { 
+            let t=document.getElementById('tabelPLDigital'), datalistKasir = document.getElementById('listProdukKasir'); 
+            t.innerHTML=''; 
+            let listHtml = '<option value="Lain-lain">';
+            snap.forEach(c=>{ 
+                let d=c.val(); 
+                t.innerHTML+=`<tr><td>${d.kode}</td><td>${d.nama}</td><td>${d.jenis}</td><td>Rp ${parseInt(d.nominal||0).toLocaleString()}</td><td>Rp ${parseInt(d.total||0).toLocaleString()}</td></tr>`;
+                listHtml += `<option value="${d.nama}">`;
+                daftarHargaProduk[d.nama] = parseInt(d.total || 0);
+            }); 
+            datalistKasir.innerHTML = listHtml;
+        });
+
+        // Price List Non-Digital
         function simpanPLNonDigital() {
-            let k=document.getElementById('plNonKode').value; if(!k) return;
-            db.ref('warung/pricelist/nondigital/'+k).set({ kode:k, nama:document.getElementById('plNonNama').value, beli:document.getElementById('plNonBeli').value, jual:document.getElementById('plNonJual').value, laba:document.getElementById('plNonLabaRp').value }).then(()=>{ document.getElementById('plNonKode').value=''; alert("Disimpan"); });
+            let k=document.getElementById('plNonKode').value, nama=document.getElementById('plNonNama').value; if(!k || !nama) return alert("Lengkapi data!");
+            db.ref('warung/pricelist/nondigital/'+k).set({ kode:k, nama:nama, jenis:document.getElementById('plNonJenis').value, beli:document.getElementById('plNonBeli').value, laba_persen:document.getElementById('plNonLabaPersen').value||0, jual:document.getElementById('plNonJual').value, supplier:document.getElementById('plNonSupplier').value }).then(()=>{ document.getElementById('plNonNama').value=''; document.getElementById('plNonKode').value=''; document.getElementById('plNonBeli').value=''; document.getElementById('plNonLabaPersen').value=''; document.getElementById('plNonJual').value=''; alert("Disimpan"); });
         }
-        db.ref('warung/pricelist/digital').on('value', snap => { let t=document.getElementById('tabelPLDigital'); t.innerHTML=''; snap.forEach(c=>{ let d=c.val(); t.innerHTML+=`<tr><td>${d.kode}</td><td>${d.jenis}</td><td>Rp ${parseInt(d.total||0).toLocaleString()}</td></tr>`; }); });
         
         let masterProduk = {};
         db.ref('warung/pricelist/nondigital').on('value', snap => { 
-            let t=document.getElementById('tabelPLNonDigital'), drop=document.getElementById('stokProduk'); t.innerHTML=''; drop.innerHTML='<option value="">-- Pilih --</option>';
+            let t=document.getElementById('tabelPLNonDigital'), drop=document.getElementById('stokProduk'), datalistKasir = document.getElementById('listProdukKasir'); 
+            t.innerHTML=''; drop.innerHTML='<option value="">-- Pilih --</option>';
+            let listHtml = datalistKasir.innerHTML;
             snap.forEach(c=>{ 
                 let d=c.val(); masterProduk[d.kode]=d.nama;
-                t.innerHTML+=`<tr><td>${d.kode}</td><td>${d.nama}</td><td>Rp ${parseInt(d.beli||0).toLocaleString()}</td><td>Rp ${parseInt(d.jual||0).toLocaleString()}</td><td>Rp ${parseInt(d.laba||0).toLocaleString()}</td></tr>`;
+                t.innerHTML+=`<tr><td>${d.kode}</td><td>${d.nama}</td><td>${d.jenis}</td><td>Rp ${parseInt(d.beli||0).toLocaleString()}</td><td>${d.laba_persen||0}%</td><td>Rp ${parseInt(d.jual||0).toLocaleString()}</td></tr>`;
                 drop.innerHTML+=`<option value="${d.kode}">[${d.kode}] ${d.nama}</option>`;
+                listHtml += `<option value="${d.nama}">`;
+                daftarHargaProduk[d.nama] = parseInt(d.jual || 0);
             }); 
+            datalistKasir.innerHTML = listHtml;
         });
 
         document.getElementById('stokWaktu').value = WaktuLokal();
