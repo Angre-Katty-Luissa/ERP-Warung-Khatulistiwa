@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ERP Warung Khatulistiwa - Mobile Friendly</title>
+    <title>ERP Warung Khatulistiwa - Secure Login</title>
     
     <!-- Library untuk Ekspor Excel, PDF, dan Grafik (Chart.js) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -12,16 +12,25 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
-        /* Desain Responsif & Mobile-Friendly */
         body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background-color: #f4f7f6; color: #333; display: flex; flex-direction: column; }
         
-        /* Sidebar Default (Laptop/Tablet Besar) */
+        /* Halaman Login Overlay */
+        #login-container { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #2c3e50; display: flex; justify-content: center; align-items: center; z-index: 9999; }
+        .login-box { background: white; padding: 30px; border-radius: 8px; width: 320px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); text-align: center; }
+        .login-box h2 { margin-top: 0; color: #2c3e50; border: none; }
+        .login-box input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .login-box button { width: 100%; padding: 12px; background: #27ae60; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .login-box button:hover { background: #219653; }
+        #login-error { color: #e74c3c; font-size: 12px; margin-top: 10px; font-weight: bold; }
+
+        /* App Wrapper (Disembunyikan Sebelum Login) */
+        #app-container { display: none; width: 100%; }
+
         .sidebar { width: 250px; background-color: #2c3e50; color: white; height: 100vh; padding-top: 20px; position: fixed; overflow-y: auto; z-index: 1000; transition: 0.3s; }
         .sidebar h2 { text-align: center; font-size: 18px; border-bottom: 1px solid #34495e; padding-bottom: 15px; margin-bottom: 0; color: #ffffff !important; }
         .menu-btn { width: 100%; padding: 15px 20px; background: none; border: none; color: #bdc3c7; text-align: left; cursor: pointer; font-size: 15px; transition: 0.3s; }
         .menu-btn:hover, .menu-btn.active { background-color: #34495e; color: white; border-left: 4px solid #3498db; }
         
-        /* Konten Utama */
         .main-content { margin-left: 250px; padding: 20px; width: calc(100% - 250px); box-sizing: border-box; }
         .page, .sub-page { display: none; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .page.active, .sub-page.active { display: block; }
@@ -29,7 +38,6 @@
         h1 { border-bottom: 2px solid #3498db; padding-bottom: 10px; color: #2980b9; margin-top: 0; font-size: 22px;}
         h2 { color: #2c3e50; font-size: 16px; border-bottom: 1px dashed #ccc; padding-bottom: 5px;}
         
-        /* Form & Grid */
         .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; }
         .form-group { display: flex; flex-direction: column; }
         .form-group label { font-size: 11px; font-weight: bold; margin-bottom: 5px; color: #7f8c8d; }
@@ -40,12 +48,12 @@
         .btn-sync { background-color: #f39c12; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px;}
         .btn-danger { background-color: #e74c3c; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px;}
         .btn-print { background-color: #8e44ad; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;}
+        .btn-logout { background-color: #c0392b; color: white; border: none; padding: 10px; width: 100%; margin-top: 20px; cursor: pointer; font-weight: bold; border-radius: 4px; }
         
         .export-container { display: flex; flex-wrap: wrap; gap: 10px; margin: 15px 0; }
         .btn-excel { background-color: #27ae60; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold; }
         .btn-pdf { background-color: #c0392b; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold; }
 
-        /* Tabel Responsif dengan Scroll Horizontal di HP */
         .table-responsive { width: 100%; overflow-x: auto; margin-top: 15px; }
         table { width: 100%; border-collapse: collapse; min-width: 500px; font-size: 12px; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
@@ -77,17 +85,15 @@
         .chart-view { display: none; }
         .chart-view.active { display: block; }
 
-        /* KHUSUS TAMPILAN HP (LAYAR KECIL DI BAWAH 768px) */
         @media screen and (max-width: 768px) {
             body { display: block; }
             .sidebar { width: 100%; height: auto; position: relative; padding-top: 10px; padding-bottom: 10px; display: flex; flex-wrap: wrap; justify-content: center; }
             .sidebar h2 { width: 100%; border: none; padding-bottom: 5px; font-size: 16px; }
             .menu-btn { width: auto; padding: 8px 12px; font-size: 12px; border-left: none !important; border-bottom: 3px solid transparent; }
             .menu-btn.active { border-bottom: 3px solid #3498db; background-color: #34495e; }
-            
             .main-content { margin-left: 0; width: 100%; padding: 10px; box-sizing: border-box; }
-            .form-grid { grid-template-columns: 1fr; } /* Form jadi 1 kolom ke bawah agar tidak sempit */
-            .dash-grid { grid-template-columns: 1fr; } /* Kartu dashboard jadi 1 kolom */
+            .form-grid { grid-template-columns: 1fr; }
+            .dash-grid { grid-template-columns: 1fr; }
         }
 
         @media print {
@@ -100,230 +106,196 @@
 </head>
 <body>
 
-    <!-- SIDEBAR / NAVIGASI ATAS DI HP -->
-    <div class="sidebar">
-        <h2>⛺ Warung Khatulistiwa</h2>
-        <button class="menu-btn active" onclick="bukaMenu('dashboard', this)">1. Dashboard</button>
-        <button class="menu-btn" onclick="bukaMenu('transaksi', this)">2. Kasir</button>
-        <button class="menu-btn" onclick="bukaMenu('operasi', this)">3. Operasi</button>
-        <button class="menu-btn" onclick="bukaMenu('pricelist', this)">4. Price List</button>
-        <button class="menu-btn" onclick="bukaMenu('stok', this)">5. Stok</button>
-        <button class="menu-btn" onclick="bukaMenu('keuangan', this)">6. Keuangan</button>
-        <button class="menu-btn" onclick="bukaMenu('akuntansi', this)" style="background-color: #16a085; color: white;">7. Akuntansi</button>
+    <!-- HALAMAN LOGIN -->
+    <div id="login-container">
+        <div class="login-box">
+            <h2>⛺ Login ERP</h2>
+            <p style="font-size: 12px; color: #7f8c8d;">Warung Khatulistiwa</p>
+            <input type="email" id="loginEmail" placeholder="Email Admin">
+            <input type="password" id="loginPassword" placeholder="Password">
+            <button onclick="prosesLogin()">Masuk Sistem</button>
+            <div id="login-error"></div>
+        </div>
     </div>
 
-    <!-- MAIN CONTENT -->
-    <div class="main-content">
-        <div id="status-db">Menghubungkan ke database...</div>
-
-        <!-- ==========================================
-             MODUL: DASHBOARD UTAMA
-             ========================================== -->
-        <div id="dashboard" class="page active">
-            <h1>Dashboard & Grafik</h1>
-            <p style="color: #7f8c8d; font-weight: bold; font-size: 13px;">📅 Hari Ini: <span id="dashTanggal"></span></p>
-            
-            <div class="export-container">
-                <button class="btn-excel" onclick="eksporExcelDashboard()">📊 Unduh Excel</button>
-                <button class="btn-pdf" onclick="eksporPdfDashboard()">📄 Cetak PDF Performa</button>
-            </div>
-
-            <div class="dash-grid">
-                <div class="dash-card bg-info"><h3>Transaksi Hari Ini</h3><div class="nilai" id="dashTrx">0</div></div>
-                <div class="dash-card bg-success"><h3>Omset Hari Ini</h3><div class="nilai" id="dashOmset">Rp 0</div></div>
-                <div class="dash-card bg-pending"><h3>Status Toko</h3><div class="nilai" id="dashStatus">Memuat...</div></div>
-                <div class="dash-card bg-danger"><h3>Stok Menipis (<=5)</h3><div class="nilai" id="dashStokAlert">0</div></div>
-            </div>
-
-            <div class="chart-container">
-                <h2>📈 Grafik Omset</h2>
-                <div class="chart-tabs">
-                    <button class="chart-tab-btn active" onclick="gantiChart('mingguan', this)">Mingguan</button>
-                    <button class="chart-tab-btn" onclick="gantiChart('bulanan', this)">Bulanan</button>
-                    <button class="chart-tab-btn" onclick="gantiChart('tahunan', this)">Tahunan</button>
-                </div>
-                <div id="view-mingguan" class="chart-view active"><canvas id="chartMingguan"></canvas></div>
-                <div id="view-bulanan" class="chart-view"><canvas id="chartBulanan"></canvas></div>
-                <div id="view-tahunan" class="chart-view"><canvas id="chartTahunan"></canvas></div>
-            </div>
-
-            <div class="alert-box">
-                <b>⚠️ Peringatan Stok Menipis (<=5):</b>
-                <ul id="dashStokList" style="margin:5px 0 0 15px;"><li>Memuat...</li></ul>
-            </div>
+    <!-- KONTEN UTAMA ERP (DIKUNCI SEBELUM LOGIN) -->
+    <div id="app-container">
+        <div class="sidebar">
+            <h2>⛺ Warung Khatulistiwa</h2>
+            <button class="menu-btn active" onclick="bukaMenu('dashboard', this)">1. Dashboard</button>
+            <button class="menu-btn" onclick="bukaMenu('transaksi', this)">2. Kasir</button>
+            <button class="menu-btn" onclick="bukaMenu('operasi', this)">3. Operasi</button>
+            <button class="menu-btn" onclick="bukaMenu('pricelist', this)">4. Price List</button>
+            <button class="menu-btn" onclick="bukaMenu('stok', this)">5. Stok</button>
+            <button class="menu-btn" onclick="bukaMenu('keuangan', this)">6. Keuangan</button>
+            <button class="menu-btn" onclick="bukaMenu('akuntansi', this)" style="background-color: #16a085; color: white;">7. Akuntansi</button>
+            <div style="padding: 0 15px;"><button class="btn-logout" onclick="prosesLogout()">Keluar (Logout)</button></div>
         </div>
 
-        <!-- ==========================================
-             MODUL: TRANSAKSI & KASIR
-             ========================================== -->
-        <div id="transaksi" class="page">
-            <h1>Form Kasir & History</h1>
-            <div class="form-grid">
-                <div class="form-group"><label>No TRX</label><input type="text" id="trxNo" readonly></div>
-                <div class="form-group"><label>Tanggal & Waktu</label><input type="datetime-local" id="trxTanggal"></div>
-                <div class="form-group"><label>Pelanggan</label><select id="trxPelanggan"><option>Umum</option><option>Keluarga</option><option>Pribadi</option></select></div>
-                <div class="form-group"><label>Media</label><select id="trxMedia"><option>Warung</option><option>Agen Mandiri</option><option>Gopay</option><option>Tokopedia</option></select></div>
-                <div class="form-group"><label>Nama Transaksi</label><input type="text" id="trxNama" required></div>
-                <div class="form-group"><label>Qty</label><input type="number" id="trxQty" value="1"></div>
-                <div class="form-group"><label>Nominal (Rp)</label><input type="number" id="trxNominal" oninput="hitungTotal()"></div>
-                <div class="form-group"><label>Admin (Rp)</label><input type="number" id="trxAdmin" oninput="hitungTotal()"></div>
-                <div class="form-group"><label>Diskon (Rp)</label><input type="number" id="trxDiskon" oninput="hitungTotal()"></div>
-                <div class="form-group"><label>Metode</label><select id="trxMetode"><option>Cash</option><option>QRIS</option><option>Transfer</option></select></div>
-                <div class="form-group"><label>Status</label><select id="trxStatus"><option>Sukses</option><option>Pending</option><option>Batal</option></select></div>
-                <div class="form-group"><label>TOTAL BAYAR (Rp)</label><input type="number" id="trxTotal" readonly style="color: #c0392b; font-size: 16px;"></div>
-            </div>
-            <button class="btn-submit" onclick="simpanTransaksi()">Simpan & Cetak Struk</button>
-            <div class="export-container">
-                <button class="btn-excel" onclick="eksporExcel('transaksi')">📊 Excel</button>
-                <button class="btn-pdf" onclick="eksporPDF('transaksi')">📄 PDF</button>
-            </div>
-            <div class="table-responsive">
-                <table><thead><tr><th>No TRX</th><th>Waktu</th><th>Nama</th><th>Total</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="tabelTransaksi"></tbody></table>
-            </div>
-            <div id="area-struk" style="display:none;">
-                <center><b>WARUNG KHATULISTIWA</b><br>------------------------<br></center>
-                No : <span id="strukNo"></span><br>Tgl: <span id="strukTgl"></span><br>Pel: <span id="strukPel"></span><br>------------------------<br>
-                <span id="strukNama"></span><br>------------------------<br><b>TOTAL: Rp <span id="strukTotal"></span></b><br>------------------------<br><center>Terima Kasih</center>
-            </div>
-        </div>
+        <div class="main-content">
+            <div id="status-db">Menghubungkan ke database...</div>
 
-        <!-- ==========================================
-             MODUL: WAKTU OPERASI
-             ========================================== -->
-        <div id="operasi" class="page">
-            <h1>Waktu Operasi</h1>
-            <div class="form-grid">
-                <div class="form-group"><label>Tanggal</label><input type="date" id="opTanggal" onchange="setHariOtomatis()"></div>
-                <div class="form-group"><label>Hari</label><input type="text" id="opHari" readonly></div>
-                <div class="form-group"><label>Status Toko</label><select id="opStatus"><option>Buka</option><option>Libur</option><option>Sakit</option></select></div>
-                <div class="form-group"><label>Jam Buka</label><input type="time" id="opBuka"></div>
-                <div class="form-group"><label>Jam Tutup</label><input type="time" id="opTutup"></div>
-                <div class="form-group"><label>Sinkronisasi</label><button class="btn-sync" onclick="tarikDataOtomatis()">🔄 Tarik Data</button></div>
-                <div class="form-group"><label>Jml Pelanggan</label><input type="number" id="opJmlPelanggan"></div>
-            </div>
-            <button class="btn-submit" onclick="simpanOperasi()">Simpan Operasional</button>
-            <div class="export-container">
-                <button class="btn-excel" onclick="eksporExcel('operasi')">📊 Excel</button>
-                <button class="btn-pdf" onclick="eksporPDF('operasi')">📄 PDF</button>
-            </div>
-            <div class="table-responsive">
-                <table><thead><tr><th>Tanggal</th><th>Hari</th><th>Status</th><th>Buka-Tutup</th><th>Pelanggan</th></tr></thead><tbody id="tabelOperasi"></tbody></table>
-            </div>
-        </div>
-
-        <!-- ==========================================
-             MODUL: PRICE LIST
-             ========================================== -->
-        <div id="pricelist" class="page">
-            <h1>Price List</h1>
-            <div class="tab-container"><button class="tab-btn active" onclick="bukaSubTab('digital', this)">🌐 Digital</button><button class="tab-btn" onclick="bukaSubTab('nondigital', this)">📦 Non-Digital</button></div>
-            
-            <div id="digital" class="sub-page active">
-                <div class="form-grid">
-                    <div class="form-group"><label>Kode</label><input type="text" id="plDigKode" placeholder="GOPAY-50"></div>
-                    <div class="form-group"><label>Jenis</label><select id="plDigJenis"><option>e-Wallet</option><option>Pulsa</option></select></div>
-                    <div class="form-group"><label>Admin App</label><input type="number" id="plDigAdminApp" oninput="hitungAdminDig()"></div>
-                    <div class="form-group"><label>Admin Bank</label><input type="number" id="plDigAdminBank" oninput="hitungAdminDig()"></div>
-                    <div class="form-group"><label>Fee Warung</label><input type="number" id="plDigFee" oninput="hitungAdminDig()"></div>
-                    <div class="form-group"><label>TOTAL ADMIN</label><input type="number" id="plDigTotalAdmin" readonly></div>
-                </div>
-                <button class="btn-submit" onclick="simpanPLDigital()">Simpan Digital</button>
+            <div id="dashboard" class="page active">
+                <h1>Dashboard & Grafik</h1>
+                <p style="color: #7f8c8d; font-weight: bold; font-size: 13px;">📅 Hari Ini: <span id="dashTanggal"></span></p>
                 <div class="export-container">
-                    <button class="btn-excel" onclick="eksporExcel('pl_digital')">📊 Excel</button>
-                    <button class="btn-pdf" onclick="eksporPDF('pl_digital')">📄 PDF</button>
+                    <button class="btn-excel" onclick="eksporExcelDashboard()">📊 Unduh Excel</button>
+                    <button class="btn-pdf" onclick="eksporPdfDashboard()">📄 Cetak PDF Performa</button>
                 </div>
-                <div class="table-responsive"><table><thead><tr><th>Kode</th><th>Jenis</th><th>Admin</th></tr></thead><tbody id="tabelPLDigital"></tbody></table></div>
+                <div class="dash-grid">
+                    <div class="dash-card bg-info"><h3>Transaksi Hari Ini</h3><div class="nilai" id="dashTrx">0</div></div>
+                    <div class="dash-card bg-success"><h3>Omset Hari Ini</h3><div class="nilai" id="dashOmset">Rp 0</div></div>
+                    <div class="dash-card bg-pending"><h3>Status Toko</h3><div class="nilai" id="dashStatus">Memuat...</div></div>
+                    <div class="dash-card bg-danger"><h3>Stok Menipis (<=5)</h3><div class="nilai" id="dashStokAlert">0</div></div>
+                </div>
+                <div class="chart-container">
+                    <h2>📈 Grafik Omset</h2>
+                    <div class="chart-tabs">
+                        <button class="chart-tab-btn active" onclick="gantiChart('mingguan', this)">Mingguan</button>
+                        <button class="chart-tab-btn" onclick="gantiChart('bulanan', this)">Bulanan</button>
+                        <button class="chart-tab-btn" onclick="gantiChart('tahunan', this)">Tahunan</button>
+                    </div>
+                    <div id="view-mingguan" class="chart-view active"><canvas id="chartMingguan"></canvas></div>
+                    <div id="view-bulanan" class="chart-view"><canvas id="chartBulanan"></canvas></div>
+                    <div id="view-tahunan" class="chart-view"><canvas id="chartTahunan"></canvas></div>
+                </div>
+                <div class="alert-box">
+                    <b>⚠️ Peringatan Stok Menipis (<=5):</b>
+                    <ul id="dashStokList" style="margin:5px 0 0 15px;"><li>Memuat...</li></ul>
+                </div>
             </div>
 
-            <div id="nondigital" class="sub-page">
+            <div id="transaksi" class="page">
+                <h1>Form Kasir & History</h1>
                 <div class="form-grid">
-                    <div class="form-group"><label>Kode</label><input type="text" id="plNonKode" placeholder="BRS-5KG"></div>
-                    <div class="form-group"><label>Nama Produk</label><input type="text" id="plNonNama"></div>
-                    <div class="form-group"><label>Harga Beli</label><input type="number" id="plNonBeli" oninput="hitungLabaNon()"></div>
-                    <div class="form-group"><label>Harga Jual</label><input type="number" id="plNonJual" oninput="hitungLabaNon()"></div>
-                    <div class="form-group"><label>Laba (Rp)</label><input type="number" id="plNonLabaRp" readonly></div>
-                    <div class="form-group"><label>Supplier</label><input type="text" id="plNonSupplier"></div>
+                    <div class="form-group"><label>No TRX</label><input type="text" id="trxNo" readonly></div>
+                    <div class="form-group"><label>Tanggal & Waktu</label><input type="datetime-local" id="trxTanggal"></div>
+                    <div class="form-group"><label>Pelanggan</label><select id="trxPelanggan"><option>Umum</option><option>Keluarga</option><option>Pribadi</option></select></div>
+                    <div class="form-group"><label>Media</label><select id="trxMedia"><option>Warung</option><option>Agen Mandiri</option><option>Gopay</option><option>Tokopedia</option></select></div>
+                    <div class="form-group"><label>Nama Transaksi</label><input type="text" id="trxNama" required></div>
+                    <div class="form-group"><label>Qty</label><input type="number" id="trxQty" value="1"></div>
+                    <div class="form-group"><label>Nominal (Rp)</label><input type="number" id="trxNominal" oninput="hitungTotal()"></div>
+                    <div class="form-group"><label>Admin (Rp)</label><input type="number" id="trxAdmin" oninput="hitungTotal()"></div>
+                    <div class="form-group"><label>Diskon (Rp)</label><input type="number" id="trxDiskon" oninput="hitungTotal()"></div>
+                    <div class="form-group"><label>Metode</label><select id="trxMetode"><option>Cash</option><option>QRIS</option><option>Transfer</option></select></div>
+                    <div class="form-group"><label>Status</label><select id="trxStatus"><option>Sukses</option><option>Pending</option><option>Batal</option></select></div>
+                    <div class="form-group"><label>TOTAL BAYAR (Rp)</label><input type="number" id="trxTotal" readonly style="color: #c0392b; font-size: 16px;"></div>
                 </div>
-                <button class="btn-submit" onclick="simpanPLNonDigital()">Simpan Fisik</button>
-                <div class="export-container">
-                    <button class="btn-excel" onclick="eksporExcel('pl_nondigital')">📊 Excel</button>
-                    <button class="btn-pdf" onclick="eksporPDF('pl_nondigital')">📄 PDF</button>
+                <button class="btn-submit" onclick="simpanTransaksi()">Simpan & Cetak Struk</button>
+                <div class="export-container"><button class="btn-excel" onclick="eksporExcel('transaksi')">📊 Excel</button><button class="btn-pdf" onclick="eksporPDF('transaksi')">📄 PDF</button></div>
+                <div class="table-responsive"><table><thead><tr><th>No TRX</th><th>Waktu</th><th>Nama</th><th>Total</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="tabelTransaksi"></tbody></table></div>
+                <div id="area-struk" style="display:none;">
+                    <center><b>WARUNG KHATULISTIWA</b><br>------------------------<br></center>
+                    No : <span id="strukNo"></span><br>Tgl: <span id="strukTgl"></span><br>Pel: <span id="strukPel"></span><br>------------------------<br>
+                    <span id="strukNama"></span><br>------------------------<br><b>TOTAL: Rp <span id="strukTotal"></span></b><br>------------------------<br><center>Terima Kasih</center>
                 </div>
-                <div class="table-responsive"><table><thead><tr><th>Kode</th><th>Nama</th><th>Beli</th><th>Jual</th><th>Laba</th></tr></thead><tbody id="tabelPLNonDigital"></tbody></table></div>
             </div>
-        </div>
 
-        <!-- ==========================================
-             MODUL: ARUS STOK
-             ========================================== -->
-        <div id="stok" class="page">
-            <h1>Arus Stok</h1>
-            <div class="form-grid">
-                <div class="form-group"><label>Pilih Produk</label><select id="stokProduk"><option value="">-- Pilih --</option></select></div>
-                <div class="form-group"><label>Waktu</label><input type="datetime-local" id="stokWaktu"></div>
-                <div class="form-group"><label>Jenis</label><select id="stokJenis"><option>Masuk</option><option>Keluar</option></select></div>
-                <div class="form-group"><label>Qty</label><input type="number" id="stokQty" value="1"></div>
-                <div class="form-group" style="grid-column: span 1;"><label>Keterangan</label><input type="text" id="stokKet"></div>
+            <div id="operasi" class="page">
+                <h1>Waktu Operasi</h1>
+                <div class="form-grid">
+                    <div class="form-group"><label>Tanggal</label><input type="date" id="opTanggal" onchange="setHariOtomatis()"></div>
+                    <div class="form-group"><label>Hari</label><input type="text" id="opHari" readonly></div>
+                    <div class="form-group"><label>Status Toko</label><select id="opStatus"><option>Buka</option><option>Libur</option><option>Sakit</option></select></div>
+                    <div class="form-group"><label>Jam Buka</label><input type="time" id="opBuka"></div>
+                    <div class="form-group"><label>Jam Tutup</label><input type="time" id="opTutup"></div>
+                    <div class="form-group"><label>Sinkronisasi</label><button class="btn-sync" onclick="tarikDataOtomatis()">🔄 Tarik Data</button></div>
+                    <div class="form-group"><label>Jml Pelanggan</label><input type="number" id="opJmlPelanggan"></div>
+                </div>
+                <button class="btn-submit" onclick="simpanOperasi()">Simpan Operasional</button>
+                <div class="export-container"><button class="btn-excel" onclick="eksporExcel('operasi')">📊 Excel</button><button class="btn-pdf" onclick="eksporPDF('operasi')">📄 PDF</button></div>
+                <div class="table-responsive"><table><thead><tr><th>Tanggal</th><th>Hari</th><th>Status</th><th>Buka-Tutup</th><th>Pelanggan</th></tr></thead><tbody id="tabelOperasi"></tbody></table></div>
             </div>
-            <button class="btn-submit" onclick="simpanLogStok()">Catat Stok</button>
-            <div class="export-container">
-                <button class="btn-excel" onclick="eksporExcel('stok')">📊 Excel</button>
-                <button class="btn-pdf" onclick="eksporPDF('stok')">📄 PDF</button>
-            </div>
-            <h2>Sisa Stok Tersedia</h2>
-            <div class="table-responsive"><table><thead><tr><th>Kode</th><th>Nama</th><th>Sisa</th></tr></thead><tbody id="tabelStokTotal"></tbody></table></div>
-        </div>
 
-        <!-- ==========================================
-             MODUL: KEUANGAN
-             ========================================== -->
-        <div id="keuangan" class="page">
-            <h1>Laporan Keuangan</h1>
-            <div class="dash-grid">
-                <div class="dash-card bg-info"><h3>Omset</h3><div class="nilai" id="keuOmset">Rp 0</div></div>
-                <div class="dash-card bg-danger"><h3>Pengeluaran</h3><div class="nilai" id="keuPengeluaran">Rp 0</div></div>
-                <div class="dash-card bg-success" id="cardLaba"><h3>Laba</h3><div class="nilai" id="keuLaba">Rp 0</div></div>
+            <div id="pricelist" class="page">
+                <h1>Price List</h1>
+                <div class="tab-container"><button class="tab-btn active" onclick="bukaSubTab('digital', this)">🌐 Digital</button><button class="tab-btn" onclick="bukaSubTab('nondigital', this)">📦 Non-Digital</button></div>
+                <div id="digital" class="sub-page active">
+                    <div class="form-grid">
+                        <div class="form-group"><label>Kode</label><input type="text" id="plDigKode" placeholder="GOPAY-50"></div>
+                        <div class="form-group"><label>Jenis</label><select id="plDigJenis"><option>e-Wallet</option><option>Pulsa</option></select></div>
+                        <div class="form-group"><label>Admin App</label><input type="number" id="plDigAdminApp" oninput="hitungAdminDig()"></div>
+                        <div class="form-group"><label>Admin Bank</label><input type="number" id="plDigAdminBank" oninput="hitungAdminDig()"></div>
+                        <div class="form-group"><label>Fee Warung</label><input type="number" id="plDigFee" oninput="hitungAdminDig()"></div>
+                        <div class="form-group"><label>TOTAL ADMIN</label><input type="number" id="plDigTotalAdmin" readonly></div>
+                    </div>
+                    <button class="btn-submit" onclick="simpanPLDigital()">Simpan Digital</button>
+                    <div class="export-container"><button class="btn-excel" onclick="eksporExcel('pl_digital')">📊 Excel</button><button class="btn-pdf" onclick="eksporPDF('pl_digital')">📄 PDF</button></div>
+                    <div class="table-responsive"><table><thead><tr><th>Kode</th><th>Jenis</th><th>Admin</th></tr></thead><tbody id="tabelPLDigital"></tbody></table></div>
+                </div>
+                <div id="nondigital" class="sub-page">
+                    <div class="form-grid">
+                        <div class="form-group"><label>Kode</label><input type="text" id="plNonKode" placeholder="BRS-5KG"></div>
+                        <div class="form-group"><label>Nama Produk</label><input type="text" id="plNonNama"></div>
+                        <div class="form-group"><label>Harga Beli</label><input type="number" id="plNonBeli" oninput="hitungLabaNon()"></div>
+                        <div class="form-group"><label>Harga Jual</label><input type="number" id="plNonJual" oninput="hitungLabaNon()"></div>
+                        <div class="form-group"><label>Laba (Rp)</label><input type="number" id="plNonLabaRp" readonly></div>
+                        <div class="form-group"><label>Supplier</label><input type="text" id="plNonSupplier"></div>
+                    </div>
+                    <button class="btn-submit" onclick="simpanPLNonDigital()">Simpan Fisik</button>
+                    <div class="export-container"><button class="btn-excel" onclick="eksporExcel('pl_nondigital')">📊 Excel</button><button class="btn-pdf" onclick="eksporPDF('pl_nondigital')">📄 PDF</button></div>
+                    <div class="table-responsive"><table><thead><tr><th>Kode</th><th>Nama</th><th>Beli</th><th>Jual</th><th>Laba</th></tr></thead><tbody id="tabelPLNonDigital"></tbody></table></div>
+                </div>
             </div>
-            <div class="export-container">
-                <button class="btn-excel" onclick="eksporExcel('pengeluaran')">📊 Excel</button>
-                <button class="btn-pdf" onclick="eksporPDF('pengeluaran')">📄 PDF</button>
-            </div>
-            <h2>Catat Pengeluaran</h2>
-            <div class="form-grid">
-                <div class="form-group"><label>Waktu</label><input type="datetime-local" id="pengWaktu"></div>
-                <div class="form-group"><label>Kategori</label><select id="pengKategori"><option>Kulakan</option><option>Listrik</option><option>Lainnya</option></select></div>
-                <div class="form-group"><label>Nominal (Rp)</label><input type="number" id="pengNominal"></div>
-                <div class="form-group"><label>Keterangan</label><input type="text" id="pengKeterangan"></div>
-            </div>
-            <button class="btn-danger" onclick="simpanPengeluaran()">Catat Pengeluaran</button>
-            <div class="table-responsive"><table><thead><tr><th>Waktu</th><th>Kategori</th><th>Nominal</th><th>Ket</th></tr></thead><tbody id="tabelPengeluaran"></tbody></table></div>
-        </div>
 
-        <!-- ==========================================
-             MODUL: AKUNTANSI & PDF
-             ========================================== -->
-        <div id="akuntansi" class="page">
-            <h1>Akuntansi & Laporan Formal</h1>
-            <div class="export-container" style="margin-bottom: 20px;">
-                <button class="btn-pdf" onclick="cetakPdfLabaRugi()" style="background-color: #2980b9;">📄 PDF Laba Rugi</button>
-                <button class="btn-pdf" onclick="cetakPdfArusKas()" style="background-color: #16a085;">📄 PDF Arus Kas</button>
-                <button class="btn-pdf" onclick="cetakPdfJurnalUmum()" style="background-color: #8e44ad;">📄 PDF Jurnal</button>
+            <div id="stok" class="page">
+                <h1>Arus Stok</h1>
+                <div class="form-grid">
+                    <div class="form-group"><label>Pilih Produk</label><select id="stokProduk"><option value="">-- Pilih --</option></select></div>
+                    <div class="form-group"><label>Waktu</label><input type="datetime-local" id="stokWaktu"></div>
+                    <div class="form-group"><label>Jenis</label><select id="stokJenis"><option>Masuk</option><option>Keluar</option></select></div>
+                    <div class="form-group"><label>Qty</label><input type="number" id="stokQty" value="1"></div>
+                    <div class="form-group" style="grid-column: span 1;"><label>Keterangan</label><input type="text" id="stokKet"></div>
+                </div>
+                <button class="btn-submit" onclick="simpanLogStok()">Catat Stok</button>
+                <div class="export-container"><button class="btn-excel" onclick="eksporExcel('stok')">📊 Excel</button><button class="btn-pdf" onclick="eksporPDF('stok')">📄 PDF</button></div>
+                <h2>Sisa Stok Tersedia</h2>
+                <div class="table-responsive"><table><thead><tr><th>Kode</th><th>Nama</th><th>Sisa</th></tr></thead><tbody id="tabelStokTotal"></tbody></table></div>
             </div>
-            <h2>Preview: Laba Rugi</h2>
-            <div class="report-box">
-                <div class="report-row"><span>Total Pendapatan</span><span id="prevOmset" style="font-weight:bold; color:#27ae60;">Rp 0</span></div>
-                <div class="report-row"><span>Total Beban</span><span id="prevBeban" style="font-weight:bold; color:#c0392b;">Rp 0</span></div>
-                <div class="report-row total"><span>LABA BERSIH</span><span id="prevLabaBersih">Rp 0</span></div>
+
+            <div id="keuangan" class="page">
+                <h1>Laporan Keuangan</h1>
+                <div class="dash-grid">
+                    <div class="dash-card bg-info"><h3>Omset</h3><div class="nilai" id="keuOmset">Rp 0</div></div>
+                    <div class="dash-card bg-danger"><h3>Pengeluaran</h3><div class="nilai" id="keuPengeluaran">Rp 0</div></div>
+                    <div class="dash-card bg-success" id="cardLaba"><h3>Laba</h3><div class="nilai" id="keuLaba">Rp 0</div></div>
+                </div>
+                <div class="export-container"><button class="btn-excel" onclick="eksporExcel('pengeluaran')">📊 Excel</button><button class="btn-pdf" onclick="eksporPDF('pengeluaran')">📄 PDF</button></div>
+                <h2>Catat Pengeluaran</h2>
+                <div class="form-grid">
+                    <div class="form-group"><label>Waktu</label><input type="datetime-local" id="pengWaktu"></div>
+                    <div class="form-group"><label>Kategori</label><select id="pengKategori"><option>Kulakan</option><option>Listrik</option><option>Lainnya</option></select></div>
+                    <div class="form-group"><label>Nominal (Rp)</label><input type="number" id="pengNominal"></div>
+                    <div class="form-group"><label>Keterangan</label><input type="text" id="pengKeterangan"></div>
+                </div>
+                <button class="btn-danger" onclick="simpanPengeluaran()">Catat Pengeluaran</button>
+                <div class="table-responsive"><table><thead><tr><th>Waktu</th><th>Kategori</th><th>Nominal</th><th>Ket</th></tr></thead><tbody id="tabelPengeluaran"></tbody></table></div>
             </div>
-            <h2>Preview: Jurnal Umum</h2>
-            <div class="table-responsive">
-                <table><thead><tr><th>Tanggal</th><th>Akun</th><th>Debet</th><th>Kredit</th></tr></thead><tbody id="tabelJurnalUmum"></tbody></table>
+
+            <div id="akuntansi" class="page">
+                <h1>Akuntansi & Laporan Formal</h1>
+                <div class="export-container" style="margin-bottom: 20px;">
+                    <button class="btn-pdf" onclick="cetakPdfLabaRugi()" style="background-color: #2980b9;">📄 PDF Laba Rugi</button>
+                    <button class="btn-pdf" onclick="cetakPdfArusKas()" style="background-color: #16a085;">📄 PDF Arus Kas</button>
+                    <button class="btn-pdf" onclick="cetakPdfJurnalUmum()" style="background-color: #8e44ad;">📄 PDF Jurnal</button>
+                </div>
+                <h2>Preview: Laba Rugi</h2>
+                <div class="report-box">
+                    <div class="report-row"><span>Total Pendapatan</span><span id="prevOmset" style="font-weight:bold; color:#27ae60;">Rp 0</span></div>
+                    <div class="report-row"><span>Total Beban</span><span id="prevBeban" style="font-weight:bold; color:#c0392b;">Rp 0</span></div>
+                    <div class="report-row total"><span>LABA BERSIH</span><span id="prevLabaBersih">Rp 0</span></div>
+                </div>
+                <h2>Preview: Jurnal Umum</h2>
+                <div class="table-responsive">
+                    <table><thead><tr><th>Tanggal</th><th>Akun</th><th>Debet</th><th>Kredit</th></tr></thead><tbody id="tabelJurnalUmum"></tbody></table>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Firebase SDK -->
+    <!-- Firebase SDK (Auth & Database) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <script>
@@ -343,7 +315,31 @@ const firebaseConfig = {
         };
 
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+        const auth = firebase.auth();
         const db = firebase.database();
+
+        // --- SISTEM AUTENTIKASI (LOGIN / LOGOUT) ---
+        function prosesLogin() {
+            let email = document.getElementById('loginEmail').value;
+            let pass = document.getElementById('loginPassword').value;
+            auth.signInWithEmailAndPassword(email, pass)
+                .then(() => { document.getElementById('login-error').innerText = ""; })
+                .catch((error) => { document.getElementById('login-error').innerText = "Gagal Masuk: " + error.message; });
+        }
+
+        function prosesLogout() {
+            auth.signOut().then(() => { alert("Berhasil keluar."); });
+        }
+
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                document.getElementById('login-container').style.display = 'none';
+                document.getElementById('app-container').style.display = 'flex';
+            } else {
+                document.getElementById('login-container').style.display = 'flex';
+                document.getElementById('app-container').style.display = 'none';
+            }
+        });
 
         function bukaMenu(id, btn) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -355,12 +351,10 @@ const firebaseConfig = {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(id).classList.add('active'); btn.classList.add('active');
         }
-
         function gantiChart(jenis, btn) {
             document.querySelectorAll('.chart-view').forEach(v => v.classList.remove('active'));
             document.querySelectorAll('.chart-tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('view-' + jenis).classList.add('active');
-            btn.classList.add('active');
+            document.getElementById('view-' + jenis).classList.add('active'); btn.classList.add('active');
         }
 
         const d = new Date();
@@ -418,7 +412,7 @@ const firebaseConfig = {
         let totalOmsetG = 0, trxHariIniG = 0, omsetHariIniG = 0;
         let dataTransaksiGlobal = [];
         db.ref('warung/transaksi').on('value', snap => {
-            document.getElementById('status-db').innerText="🟢 Terkoneksi (Sistem Siap)"; document.getElementById('status-db').style.color="#27ae60";
+            document.getElementById('status-db').innerText="🟢 Terkoneksi (Sistem Aman)"; document.getElementById('status-db').style.color="#27ae60";
             let tTrx = document.getElementById('tabelTransaksi'); tTrx.innerHTML='';
             trxHariIniG = 0; omsetHariIniG = 0; totalOmsetG = 0; dataTransaksiGlobal = [];
             
