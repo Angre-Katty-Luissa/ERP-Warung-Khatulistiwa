@@ -126,7 +126,8 @@
             <button class="menu-btn" onclick="bukaMenu('pricelist', this)">4. Price List</button>
             <button class="menu-btn" onclick="bukaMenu('stok', this)">5. Stok</button>
             <button class="menu-btn" onclick="bukaMenu('keuangan', this)">6. Keuangan</button>
-            <button class="menu-btn" onclick="bukaMenu('akuntansi', this)" style="background-color: #16a085; color: white;">7. Akuntansi</button>
+            <button class="menu-btn" onclick="bukaMenu('akuntansi', this)">7. Akuntansi</button>
+            <button class="menu-btn" onclick="bukaMenu('legalitas', this)" style="background-color: #8e44ad; color: white;">9. Legalitas Warung</button>
             <div style="width: 100%; text-align: center;"><button class="btn-logout" onclick="prosesLogout()">Keluar (Logout)</button></div>
         </div>
 
@@ -253,13 +254,13 @@
                             </select>
                         </div>
                         <div class="form-group"><label>Harga Beli (Rp)</label><input type="number" id="plNonBeli" oninput="hitungLabaNonDigital()"></div>
-                        <div class="form-group"><label>Laba (%)</label><input type="number" id="plNonLabaPersen" placeholder="Contoh: 15" oninput="hitungLabaNonDigital()"></div>
-                        <div class="form-group"><label>Harga Jual (Rp)</label><input type="number" id="plNonJual" readonly></div>
+                        <div class="form-group"><label>Harga Jual (Rp)</label><input type="number" id="plNonJual" oninput="hitungLabaNonDigital()"></div>
+                        <div class="form-group"><label>Laba (Rp)</label><input type="number" id="plNonLabaRp" readonly></div>
                         <div class="form-group"><label>Supplier</label><input type="text" id="plNonSupplier"></div>
                     </div>
                     <button class="btn-submit" onclick="simpanPLNonDigital()">Simpan Fisik</button>
                     <div class="export-container"><button class="btn-excel" onclick="eksporExcel('pl_nondigital')">📊 Excel</button><button class="btn-pdf" onclick="eksporPDF('pl_nondigital')">📄 PDF</button></div>
-                    <div class="table-responsive"><table><thead><tr><th>Kode</th><th>Nama</th><th>Jenis</th><th>Beli</th><th>Laba (%)</th><th>Jual</th></tr></thead><tbody id="tabelPLNonDigital"></tbody></table></div>
+                    <div class="table-responsive"><table><thead><tr><th>Kode</th><th>Nama</th><th>Jenis</th><th>Beli</th><th>Jual</th><th>Laba</th></tr></thead><tbody id="tabelPLNonDigital"></tbody></table></div>
                 </div>
             </div>
 
@@ -316,6 +317,22 @@
                 <h2>Preview: Jurnal Umum</h2>
                 <div class="table-responsive">
                     <table><thead><tr><th>Tanggal</th><th>Akun</th><th>Debet</th><th>Kredit</th></tr></thead><tbody id="tabelJurnalUmum"></tbody></table>
+                </div>
+            </div>
+
+            <!-- MODUL 9: LEGALITAS WARUNG -->
+            <div id="legalitas" class="page">
+                <h1>Legalitas & Informasi Warung</h1>
+                <div class="report-box">
+                    <div class="report-row"><span>Nama Warung</span><span style="font-weight: bold;">Warung Khatulistiwa</span></div>
+                    <div class="report-row"><span>Alamat</span><span style="text-align: right;">Terminal Bekasi, Jl. Insinyur H. Juanda 001 009 Blok U / 7</span></div>
+                    <div class="report-row"><span>Nomor Induk Berusaha (NIB)</span><span style="font-weight: bold;">2306260181603</span></div>
+                    <div class="report-row"><span>Agen</span><span>Mandiri Agen</span></div>
+                    <div class="report-row"><span>No Registrasi Agen</span><span>008-0102-2613043</span></div>
+                    <div class="report-row"><span>Masa Berlaku Mandiri Agen</span><span>23 Juni 2026 - 23 Juni 2031</span></div>
+                    <div class="report-row"><span>Masa Sewa Kios</span><span>15 Juni 2026 - 15 Desember 2026</span></div>
+                    <div class="report-row"><span>Biaya Sewa</span><span style="color: #c0392b; font-weight: bold;">Rp 3,500,000 / 6 bulan</span></div>
+                    <div class="report-row"><span>Nama Pemilik Kios</span><span>Lukman (<a href="https://wa.me/6281298465499" target="_blank" style="color: #27ae60; text-decoration: none; font-weight: bold;">081298465499</a>)</span></div>
                 </div>
             </div>
         </div>
@@ -398,9 +415,9 @@
 
         function hitungLabaNonDigital() {
             let beli = parseFloat(document.getElementById('plNonBeli').value) || 0;
-            let persentase = parseFloat(document.getElementById('plNonLabaPersen').value) || 0;
-            let jual = beli + (beli * (persentase / 100));
-            document.getElementById('plNonJual').value = Math.round(jual);
+            let jual = parseFloat(document.getElementById('plNonJual').value) || 0;
+            let laba = jual - beli;
+            document.getElementById('plNonLabaRp').value = laba >= 0 ? laba : 0;
         }
 
         const d = new Date();
@@ -569,7 +586,7 @@
         // Price List Non-Digital
         function simpanPLNonDigital() {
             let k=document.getElementById('plNonKode').value, nama=document.getElementById('plNonNama').value; if(!k || !nama) return alert("Lengkapi data!");
-            db.ref('warung/pricelist/nondigital/'+k).set({ kode:k, nama:nama, jenis:document.getElementById('plNonJenis').value, beli:document.getElementById('plNonBeli').value, laba_persen:document.getElementById('plNonLabaPersen').value||0, jual:document.getElementById('plNonJual').value, supplier:document.getElementById('plNonSupplier').value }).then(()=>{ document.getElementById('plNonNama').value=''; document.getElementById('plNonKode').value=''; document.getElementById('plNonBeli').value=''; document.getElementById('plNonLabaPersen').value=''; document.getElementById('plNonJual').value=''; alert("Disimpan"); });
+            db.ref('warung/pricelist/nondigital/'+k).set({ kode:k, nama:nama, jenis:document.getElementById('plNonJenis').value, beli:document.getElementById('plNonBeli').value, jual:document.getElementById('plNonJual').value, laba:document.getElementById('plNonLabaRp').value, supplier:document.getElementById('plNonSupplier').value }).then(()=>{ document.getElementById('plNonNama').value=''; document.getElementById('plNonKode').value=''; document.getElementById('plNonBeli').value=''; document.getElementById('plNonJual').value=''; document.getElementById('plNonLabaRp').value=''; alert("Disimpan"); });
         }
         
         let masterProduk = {};
@@ -579,7 +596,7 @@
             let listHtml = datalistKasir.innerHTML;
             snap.forEach(c=>{ 
                 let d=c.val(); masterProduk[d.kode]=d.nama;
-                t.innerHTML+=`<tr><td>${d.kode}</td><td>${d.nama}</td><td>${d.jenis}</td><td>Rp ${parseInt(d.beli||0).toLocaleString()}</td><td>${d.laba_persen||0}%</td><td>Rp ${parseInt(d.jual||0).toLocaleString()}</td></tr>`;
+                t.innerHTML+=`<tr><td>${d.kode}</td><td>${d.nama}</td><td>${d.jenis}</td><td>Rp ${parseInt(d.beli||0).toLocaleString()}</td><td>Rp ${parseInt(d.jual||0).toLocaleString()}</td><td>Rp ${parseInt(d.laba||0).toLocaleString()}</td></tr>`;
                 drop.innerHTML+=`<option value="${d.kode}">[${d.kode}] ${d.nama}</option>`;
                 listHtml += `<option value="${d.nama}">`;
                 daftarHargaProduk[d.nama] = parseInt(d.jual || 0);
