@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ERP Warung Khatulistiwa - Ultimate Version</title>
+    <title>ERP Warung Khatulistiwa - CRUD Version</title>
     
     <!-- Library untuk Ekspor Excel, PDF, dan Grafik (Chart.js) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -45,7 +45,13 @@
         .btn-submit { background-color: #27ae60; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px;}
         .btn-sync { background-color: #f39c12; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px;}
         .btn-danger { background-color: #e74c3c; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px;}
-        .btn-print { background-color: #8e44ad; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;}
+        
+        /* Tombol Aksi Tabel */
+        .btn-action-container { display: flex; gap: 5px; }
+        .btn-print { background-color: #8e44ad; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold;}
+        .btn-edit { background-color: #f39c12; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold;}
+        .btn-del { background-color: #e74c3c; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold;}
+        
         .btn-logout { background-color: #c0392b; color: white; border: none; padding: 10px; width: 100%; margin-top: 20px; cursor: pointer; font-weight: bold; border-radius: 4px; }
         
         .export-container { display: flex; flex-wrap: wrap; gap: 10px; margin: 15px 0; }
@@ -212,7 +218,7 @@
                 </div>
                 <button class="btn-submit" onclick="simpanOperasi()">Simpan Operasional</button>
                 <div class="export-container"><button class="btn-excel" onclick="eksporExcel('operasi')">📊 Excel</button><button class="btn-pdf" onclick="eksporPDF('operasi')">📄 PDF</button></div>
-                <div class="table-responsive"><table><thead><tr><th>Tanggal</th><th>Hari</th><th>Status</th><th>Buka-Tutup</th><th>Pelanggan</th></tr></thead><tbody id="tabelOperasi"></tbody></table></div>
+                <div class="table-responsive"><table><thead><tr><th>Tanggal</th><th>Hari</th><th>Status</th><th>Buka-Tutup</th><th>Pelanggan</th><th>Aksi</th></tr></thead><tbody id="tabelOperasi"></tbody></table></div>
             </div>
 
             <!-- PRICE LIST -->
@@ -239,7 +245,7 @@
                     </div>
                     <button class="btn-submit" onclick="simpanPLDigital()">Simpan Digital</button>
                     <div class="export-container"><button class="btn-excel" onclick="eksporExcel('pl_digital')">📊 Excel</button><button class="btn-pdf" onclick="eksporPDF('pl_digital')">📄 PDF</button></div>
-                    <div class="table-responsive"><table><thead><tr><th>Kode</th><th>Nama Produk</th><th>Jenis</th><th>Nominal</th><th>Admin</th></tr></thead><tbody id="tabelPLDigital"></tbody></table></div>
+                    <div class="table-responsive"><table><thead><tr><th>Kode</th><th>Nama Produk</th><th>Jenis</th><th>Nominal</th><th>Admin</th><th>Aksi</th></tr></thead><tbody id="tabelPLDigital"></tbody></table></div>
                 </div>
 
                 <!-- Non-Digital Sub-Tab -->
@@ -260,7 +266,7 @@
                     </div>
                     <button class="btn-submit" onclick="simpanPLNonDigital()">Simpan Fisik</button>
                     <div class="export-container"><button class="btn-excel" onclick="eksporExcel('pl_nondigital')">📊 Excel</button><button class="btn-pdf" onclick="eksporPDF('pl_nondigital')">📄 PDF</button></div>
-                    <div class="table-responsive"><table><thead><tr><th>Kode</th><th>Nama</th><th>Jenis</th><th>Beli</th><th>Jual</th><th>Laba</th></tr></thead><tbody id="tabelPLNonDigital"></tbody></table></div>
+                    <div class="table-responsive"><table><thead><tr><th>Kode</th><th>Nama</th><th>Jenis</th><th>Beli</th><th>Jual</th><th>Laba</th><th>Aksi</th></tr></thead><tbody id="tabelPLNonDigital"></tbody></table></div>
                 </div>
             </div>
 
@@ -276,6 +282,8 @@
                 </div>
                 <button class="btn-submit" onclick="simpanLogStok()">Catat Stok</button>
                 <div class="export-container"><button class="btn-excel" onclick="eksporExcel('stok')">📊 Excel</button><button class="btn-pdf" onclick="eksporPDF('stok')">📄 PDF</button></div>
+                <h2>Log Arus Stok</h2>
+                <div class="table-responsive"><table><thead><tr><th>Waktu</th><th>Kode</th><th>Nama</th><th>Jenis</th><th>Qty</th><th>Ket</th><th>Aksi</th></tr></thead><tbody id="tabelStokLog"></tbody></table></div>
                 <h2>Sisa Stok Tersedia</h2>
                 <div class="table-responsive"><table><thead><tr><th>Kode</th><th>Nama</th><th>Sisa</th></tr></thead><tbody id="tabelStokTotal"></tbody></table></div>
             </div>
@@ -297,7 +305,7 @@
                     <div class="form-group"><label>Keterangan</label><input type="text" id="pengKeterangan"></div>
                 </div>
                 <button class="btn-danger" onclick="simpanPengeluaran()">Catat Pengeluaran</button>
-                <div class="table-responsive"><table><thead><tr><th>Waktu</th><th>Kategori</th><th>Nominal</th><th>Ket</th></tr></thead><tbody id="tabelPengeluaran"></tbody></table></div>
+                <div class="table-responsive"><table><thead><tr><th>Waktu</th><th>Kategori</th><th>Nominal</th><th>Ket</th><th>Aksi</th></tr></thead><tbody id="tabelPengeluaran"></tbody></table></div>
             </div>
 
             <!-- AKUNTANSI -->
@@ -400,7 +408,6 @@
             document.getElementById('view-' + jenis).classList.add('active'); btn.classList.add('active');
         }
 
-        // --- GENERATE KODE OTOMATIS ---
         function generateKodeDigital() {
             let nama = document.getElementById('plDigNama').value.trim().toUpperCase();
             let kode = nama.replace(/[^A-Z0-9]/g, '').substring(0, 6) + '-' + Math.floor(10 + Math.random() * 90);
@@ -465,17 +472,31 @@
             }
         }
 
+        // --- CRUD TRANSAKSI ---
         function simpanTransaksi() {
+            let no = document.getElementById('trxNo').value;
             let namaVal = document.getElementById('trxNama').value.trim();
             if(!namaVal) namaVal = "Lain-lain";
             
             const dataTrx = {
-                no_trx: document.getElementById('trxNo').value, waktu: document.getElementById('trxTanggal').value, pelanggan: document.getElementById('trxPelanggan').value, nama: namaVal, total_bayar: parseInt(document.getElementById('trxTotal').value)||0, status: document.getElementById('trxStatus').value
+                no_trx: no, waktu: document.getElementById('trxTanggal').value, pelanggan: document.getElementById('trxPelanggan').value, nama: namaVal, total_bayar: parseInt(document.getElementById('trxTotal').value)||0, status: document.getElementById('trxStatus').value
             };
-            db.ref('warung/transaksi/'+dataTrx.no_trx).set(dataTrx).then(()=>{
-                cetakStruk(dataTrx.no_trx, dataTrx.waktu, dataTrx.pelanggan, dataTrx.nama, dataTrx.total_bayar);
+            db.ref('warung/transaksi/'+no).set(dataTrx).then(()=>{
+                cetakStruk(no, dataTrx.waktu, dataTrx.pelanggan, dataTrx.nama, dataTrx.total_bayar);
                 document.getElementById('trxNama').value=''; document.getElementById('trxNominal').value=''; document.getElementById('trxTotal').value=''; setFormTrx();
             });
+        }
+        function editTransaksi(no, waktu, pel, nama, total, status) {
+            document.getElementById('trxNo').value = no;
+            document.getElementById('trxTanggal').value = waktu;
+            document.getElementById('trxPelanggan').value = pel;
+            document.getElementById('trxNama').value = nama;
+            document.getElementById('trxTotal').value = total;
+            document.getElementById('trxStatus').value = status;
+            bukaMenu('transaksi', document.querySelector('.sidebar button:nth-child(2)'));
+        }
+        function hapusTransaksi(no) {
+            if(confirm("Hapus transaksi ini?")) db.ref('warung/transaksi/'+no).remove();
         }
 
         function cetakStruk(no, waktu, pel, nama, total) {
@@ -527,7 +548,7 @@
             let arrRev = [...dataTransaksiGlobal].reverse();
             arrRev.forEach(t => {
                 let bg = t.status==="Sukses"?"bg-success":"bg-danger";
-                tTrx.innerHTML+=`<tr><td>${t.no_trx}</td><td>${t.waktu.replace('T',' ')}</td><td>${t.nama}</td><td>Rp ${t.total_bayar.toLocaleString()}</td><td><span class="badge ${bg}">${t.status}</span></td><td><button class="btn-print" onclick="cetakStruk('${t.no_trx}','${t.waktu}','${t.pelanggan}','${t.nama}','${t.total_bayar}')">Cetak</button></td></tr>`;
+                tTrx.innerHTML+=`<tr><td>${t.no_trx}</td><td>${t.waktu.replace('T',' ')}</td><td>${t.nama}</td><td>Rp ${t.total_bayar.toLocaleString()}</td><td><span class="badge ${bg}">${t.status}</span></td><td><div class="btn-action-container"><button class="btn-print" onclick="cetakStruk('${t.no_trx}','${t.waktu}','${t.pelanggan}','${t.nama}','${t.total_bayar}')">Cetak</button><button class="btn-edit" onclick="editTransaksi('${t.no_trx}','${t.waktu}','${t.pelanggan}','${t.nama}',${t.total_bayar},'${t.status}')">Edit</button><button class="btn-del" onclick="hapusTransaksi('${t.no_trx}')">Hapus</button></div></td></tr>`;
             });
             hitungLabaRugi(); renderAkuntansi();
         });
@@ -545,6 +566,7 @@
             doc.save(`Dashboard-${tglHariIni}.pdf`);
         }
 
+        // --- CRUD OPERASI ---
         document.getElementById('opTanggal').value = tglHariIni;
         function setHariOtomatis() { const namaHari=["Minggu","Senin","Selasa","Rabu","Kamis","Jumat","Sabtu"]; document.getElementById('opHari').value = namaHari[new Date(document.getElementById('opTanggal').value).getDay()]; } setHariOtomatis();
         function tarikDataOtomatis() {
@@ -558,17 +580,38 @@
             let tg=document.getElementById('opTanggal').value;
             db.ref('warung/operasi/'+tg).set({ tgl:tg, hari:document.getElementById('opHari').value, status:document.getElementById('opStatus').value, buka:document.getElementById('opBuka').value||"-", tutup:document.getElementById('opTutup').value||"-", pel:document.getElementById('opJmlPelanggan').value||0 }).then(()=>alert("Disimpan!"));
         }
+        function editOperasi(tgl, status, buka, tutup, pel) {
+            document.getElementById('opTanggal').value = tgl;
+            setHariOtomatis();
+            document.getElementById('opStatus').value = status;
+            document.getElementById('opBuka').value = buka;
+            document.getElementById('opTutup').value = tutup;
+            document.getElementById('opJmlPelanggan').value = pel;
+        }
+        function hapusOperasi(tgl) {
+            if(confirm("Hapus data operasi tanggal "+tgl+"?")) db.ref('warung/operasi/'+tgl).remove();
+        }
         db.ref('warung/operasi').on('value', snap => {
             let tOp = document.getElementById('tabelOperasi'); tOp.innerHTML='';
-            snap.forEach(c => { let o=c.val(); tOp.innerHTML+=`<tr><td>${o.tgl}</td><td>${o.hari}</td><td><span class="badge bg-info">${o.status}</span></td><td>${o.buka}-${o.tutup}</td><td>${o.pel} org</td></tr>`; });
+            snap.forEach(c => { let o=c.val(); tOp.innerHTML+=`<tr><td>${o.tgl}</td><td>${o.hari}</td><td><span class="badge bg-info">${o.status}</span></td><td>${o.buka}-${o.tutup}</td><td>${o.pel} org</td><td><div class="btn-action-container"><button class="btn-edit" onclick="editOperasi('${o.tgl}','${o.status}','${o.buka}','${o.tutup}',${o.pel})">Edit</button><button class="btn-del" onclick="hapusOperasi('${o.tgl}')">Hapus</button></div></td></tr>`; });
             if(snap.child(tglHariIni).exists()) document.getElementById('dashStatus').innerText = snap.child(tglHariIni).val().status;
         });
 
-        // Price List Digital
+        // --- CRUD PRICE LIST DIGITAL ---
         function hitungAdminDig() { let a=parseInt(document.getElementById('plDigAdminApp').value)||0, b=parseInt(document.getElementById('plDigAdminBank').value)||0, c=parseInt(document.getElementById('plDigFee').value)||0; document.getElementById('plDigTotalAdmin').value = a+b+c; }
         function simpanPLDigital() {
             let k=document.getElementById('plDigKode').value, nama=document.getElementById('plDigNama').value; if(!k || !nama) return alert("Lengkapi data!");
             db.ref('warung/pricelist/digital/'+k).set({ kode:k, nama:nama, jenis:document.getElementById('plDigJenis').value, nominal:document.getElementById('plDigNominal').value||0, total:document.getElementById('plDigTotalAdmin').value }).then(()=>{ document.getElementById('plDigNama').value=''; document.getElementById('plDigKode').value=''; document.getElementById('plDigNominal').value=''; alert("Disimpan"); });
+        }
+        function editPLDigital(kode, nama, jenis, nominal, total) {
+            document.getElementById('plDigKode').value = kode;
+            document.getElementById('plDigNama').value = nama;
+            document.getElementById('plDigJenis').value = jenis;
+            document.getElementById('plDigNominal').value = nominal;
+            document.getElementById('plDigTotalAdmin').value = total;
+        }
+        function hapusPLDigital(kode) {
+            if(confirm("Hapus produk digital "+kode+"?")) db.ref('warung/pricelist/digital/'+kode).remove();
         }
         db.ref('warung/pricelist/digital').on('value', snap => { 
             let t=document.getElementById('tabelPLDigital'), datalistKasir = document.getElementById('listProdukKasir'); 
@@ -576,17 +619,28 @@
             let listHtml = '<option value="Lain-lain">';
             snap.forEach(c=>{ 
                 let d=c.val(); 
-                t.innerHTML+=`<tr><td>${d.kode}</td><td>${d.nama}</td><td>${d.jenis}</td><td>Rp ${parseInt(d.nominal||0).toLocaleString()}</td><td>Rp ${parseInt(d.total||0).toLocaleString()}</td></tr>`;
+                t.innerHTML+=`<tr><td>${d.kode}</td><td>${d.nama}</td><td>${d.jenis}</td><td>Rp ${parseInt(d.nominal||0).toLocaleString()}</td><td>Rp ${parseInt(d.total||0).toLocaleString()}</td><td><div class="btn-action-container"><button class="btn-edit" onclick="editPLDigital('${d.kode}','${d.nama}','${d.jenis}',${d.nominal||0},${d.total||0})">Edit</button><button class="btn-del" onclick="hapusPLDigital('${d.kode}')">Hapus</button></div></td></tr>`;
                 listHtml += `<option value="${d.nama}">`;
                 daftarHargaProduk[d.nama] = parseInt(d.total || 0);
             }); 
             datalistKasir.innerHTML = listHtml;
         });
 
-        // Price List Non-Digital
+        // --- CRUD PRICE LIST NON-DIGITAL ---
         function simpanPLNonDigital() {
             let k=document.getElementById('plNonKode').value, nama=document.getElementById('plNonNama').value; if(!k || !nama) return alert("Lengkapi data!");
             db.ref('warung/pricelist/nondigital/'+k).set({ kode:k, nama:nama, jenis:document.getElementById('plNonJenis').value, beli:document.getElementById('plNonBeli').value, jual:document.getElementById('plNonJual').value, laba:document.getElementById('plNonLabaRp').value, supplier:document.getElementById('plNonSupplier').value }).then(()=>{ document.getElementById('plNonNama').value=''; document.getElementById('plNonKode').value=''; document.getElementById('plNonBeli').value=''; document.getElementById('plNonJual').value=''; document.getElementById('plNonLabaRp').value=''; alert("Disimpan"); });
+        }
+        function editPLNonDigital(kode, nama, jenis, beli, jual, laba) {
+            document.getElementById('plNonKode').value = kode;
+            document.getElementById('plNonNama').value = nama;
+            document.getElementById('plNonJenis').value = jenis;
+            document.getElementById('plNonBeli').value = beli;
+            document.getElementById('plNonJual').value = jual;
+            document.getElementById('plNonLabaRp').value = laba;
+        }
+        function hapusPLNonDigital(kode) {
+            if(confirm("Hapus produk fisik "+kode+"?")) db.ref('warung/pricelist/nondigital/'+kode).remove();
         }
         
         let masterProduk = {};
@@ -596,7 +650,7 @@
             let listHtml = datalistKasir.innerHTML;
             snap.forEach(c=>{ 
                 let d=c.val(); masterProduk[d.kode]=d.nama;
-                t.innerHTML+=`<tr><td>${d.kode}</td><td>${d.nama}</td><td>${d.jenis}</td><td>Rp ${parseInt(d.beli||0).toLocaleString()}</td><td>Rp ${parseInt(d.jual||0).toLocaleString()}</td><td>Rp ${parseInt(d.laba||0).toLocaleString()}</td></tr>`;
+                t.innerHTML+=`<tr><td>${d.kode}</td><td>${d.nama}</td><td>${d.jenis}</td><td>Rp ${parseInt(d.beli||0).toLocaleString()}</td><td>Rp ${parseInt(d.jual||0).toLocaleString()}</td><td>Rp ${parseInt(d.laba||0).toLocaleString()}</td><td><div class="btn-action-container"><button class="btn-edit" onclick="editPLNonDigital('${d.kode}','${d.nama}','${d.jenis}',${d.beli||0},${d.jual||0},${d.laba||0})">Edit</button><button class="btn-del" onclick="hapusPLNonDigital('${d.kode}')">Hapus</button></div></td></tr>`;
                 drop.innerHTML+=`<option value="${d.kode}">[${d.kode}] ${d.nama}</option>`;
                 listHtml += `<option value="${d.nama}">`;
                 daftarHargaProduk[d.nama] = parseInt(d.jual || 0);
@@ -604,17 +658,35 @@
             datalistKasir.innerHTML = listHtml;
         });
 
+        // --- CRUD ARUS STOK ---
         document.getElementById('stokWaktu').value = WaktuLokal();
         function simpanLogStok() {
             let k=document.getElementById('stokProduk').value, qty=parseInt(document.getElementById('stokQty').value)||0, jen=document.getElementById('stokJenis').value, idLog="LOG-"+new Date().getTime();
             if(!k || qty<=0) return alert("Pilih produk & Qty!");
-            db.ref('warung/stok_log/'+idLog).set({ waktu:document.getElementById('stokWaktu').value, kode:k, nama:masterProduk[k], jenis:jen, qty:qty, ket:document.getElementById('stokKet').value }).then(()=>{
+            db.ref('warung/stok_log/'+idLog).set({ id:idLog, waktu:document.getElementById('stokWaktu').value, kode:k, nama:masterProduk[k], jenis:jen, qty:qty, ket:document.getElementById('stokKet').value }).then(()=>{
                 db.ref('warung/stok_total/'+k).once('value').then(snap => {
                     let s = snap.exists() ? snap.val().jumlah : 0; let n = jen==="Masuk" ? s+qty : s-qty;
                     db.ref('warung/stok_total/'+k).set({ kode:k, nama:masterProduk[k], jumlah:n }).then(()=>alert("Stok diupdate!"));
                 });
             });
         }
+        function hapusLogStok(idLog, kode, jenis, qty) {
+            if(confirm("Hapus log arus stok ini?")) {
+                db.ref('warung/stok_total/'+kode).once('value').then(snap => {
+                    let s = snap.exists() ? snap.val().jumlah : 0;
+                    let n = jenis==="Masuk" ? s-qty : s+qty;
+                    db.ref('warung/stok_total/'+kode).update({ jumlah: n });
+                    db.ref('warung/stok_log/'+idLog).remove();
+                });
+            }
+        }
+        db.ref('warung/stok_log').on('value', snap => {
+            let t=document.getElementById('tabelStokLog'); t.innerHTML='';
+            snap.forEach(c=>{
+                let l=c.val();
+                t.innerHTML+=`<tr><td>${l.waktu.replace('T',' ')}</td><td>${l.kode}</td><td>${l.nama}</td><td>${l.jenis}</td><td>${l.qty}</td><td>${l.ket||'-'}</td><td><button class="btn-del" onclick="hapusLogStok('${l.id}','${l.kode}','${l.jenis}',${l.qty})">Hapus</button></td></tr>`;
+            });
+        });
         db.ref('warung/stok_total').on('value', snap => {
             let t=document.getElementById('tabelStokTotal'), c=0, alrt=''; t.innerHTML='';
             snap.forEach(ch=>{ 
@@ -626,19 +698,23 @@
             document.getElementById('dashStokList').innerHTML = c>0 ? alrt : '<li style="color:green">Aman</li>';
         });
 
+        // --- CRUD PENGELUARAN ---
         document.getElementById('pengWaktu').value = WaktuLokal();
         let totalPengG=0; let dataPengeluaranGlobal = [];
         function simpanPengeluaran() {
             let n=parseInt(document.getElementById('pengNominal').value)||0, id="OUT-"+new Date().getTime();
             if(n<=0) return;
-            db.ref('warung/pengeluaran/'+id).set({ waktu:document.getElementById('pengWaktu').value, kat:document.getElementById('pengKategori').value, nom:n, ket:document.getElementById('pengKeterangan').value }).then(()=>{ document.getElementById('pengNominal').value=''; alert("Dicatat"); });
+            db.ref('warung/pengeluaran/'+id).set({ id:id, waktu:document.getElementById('pengWaktu').value, kat:document.getElementById('pengKategori').value, nom:n, ket:document.getElementById('pengKeterangan').value }).then(()=>{ document.getElementById('pengNominal').value=''; document.getElementById('pengKeterangan').value=''; alert("Dicatat"); });
+        }
+        function hapusPengeluaran(id) {
+            if(confirm("Hapus data pengeluaran ini?")) db.ref('warung/pengeluaran/'+id).remove();
         }
         db.ref('warung/pengeluaran').on('value', snap => {
             let t=document.getElementById('tabelPengeluaran'); t.innerHTML=''; totalPengG=0; dataPengeluaranGlobal=[];
             snap.forEach(c=>{ let p=c.val(); dataPengeluaranGlobal.push(p); totalPengG+=p.nom; });
             document.getElementById('keuPengeluaran').innerText = 'Rp '+totalPengG.toLocaleString();
             let arrRev = [...dataPengeluaranGlobal].reverse();
-            arrRev.forEach(p=> t.innerHTML+=`<tr><td>${p.waktu.replace('T',' ')}</td><td>${p.kat}</td><td>Rp ${p.nom.toLocaleString()}</td><td>${p.ket}</td></tr>` );
+            arrRev.forEach(p=> t.innerHTML+=`<tr><td>${p.waktu.replace('T',' ')}</td><td>${p.kat}</td><td>Rp ${p.nom.toLocaleString()}</td><td>${p.ket||'-'}</td><td><button class="btn-del" onclick="hapusPengeluaran('${p.id}')">Hapus</button></td></tr>` );
             hitungLabaRugi(); renderAkuntansi();
         });
         function hitungLabaRugi() {
