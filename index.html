@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ERP Warung Khatulistiwa - Secure Login</title>
+    <title>ERP Warung Khatulistiwa - Fully Responsive</title>
     
     <!-- Library untuk Ekspor Excel, PDF, dan Grafik (Chart.js) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -12,36 +12,39 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background-color: #f4f7f6; color: #333; display: flex; flex-direction: column; }
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background-color: #f4f7f6; color: #333; display: flex; flex-direction: row; min-height: 100vh; }
         
         /* Halaman Login Overlay */
-        #login-container { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #2c3e50; display: flex; justify-content: center; align-items: center; z-index: 9999; }
-        .login-box { background: white; padding: 30px; border-radius: 8px; width: 320px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); text-align: center; }
+        #login-container { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #2c3e50; display: flex; justify-content: center; align-items: center; z-index: 9999; padding: 20px; }
+        .login-box { background: white; padding: 30px; border-radius: 8px; width: 100%; max-width: 320px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); text-align: center; }
         .login-box h2 { margin-top: 0; color: #2c3e50; border: none; }
-        .login-box input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .login-box input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; }
         .login-box button { width: 100%; padding: 12px; background: #27ae60; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        .login-box button:hover { background: #219653; }
         #login-error { color: #e74c3c; font-size: 12px; margin-top: 10px; font-weight: bold; }
 
-        /* App Wrapper (Disembunyikan Sebelum Login) */
-        #app-container { display: none; width: 100%; }
+        /* App Wrapper */
+        #app-container { display: none; width: 100%; display: flex; flex-direction: row; }
 
-        .sidebar { width: 250px; background-color: #2c3e50; color: white; height: 100vh; padding-top: 20px; position: fixed; overflow-y: auto; z-index: 1000; transition: 0.3s; }
+        /* Sidebar Styling */
+        .sidebar { width: 260px; background-color: #2c3e50; color: white; height: 100vh; padding-top: 20px; position: fixed; overflow-y: auto; z-index: 1000; left: 0; top: 0; transition: 0.3s; }
         .sidebar h2 { text-align: center; font-size: 18px; border-bottom: 1px solid #34495e; padding-bottom: 15px; margin-bottom: 0; color: #ffffff !important; }
-        .menu-btn { width: 100%; padding: 15px 20px; background: none; border: none; color: #bdc3c7; text-align: left; cursor: pointer; font-size: 15px; transition: 0.3s; }
+        .menu-btn { width: 100%; padding: 14px 20px; background: none; border: none; color: #bdc3c7; text-align: left; cursor: pointer; font-size: 14px; transition: 0.3s; }
         .menu-btn:hover, .menu-btn.active { background-color: #34495e; color: white; border-left: 4px solid #3498db; }
         
-        .main-content { margin-left: 250px; padding: 20px; width: calc(100% - 250px); box-sizing: border-box; }
-        .page, .sub-page { display: none; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        /* Main Content Layout */
+        .main-content { margin-left: 260px; padding: 20px; width: calc(100% - 260px); box-sizing: border-box; min-height: 100vh; }
+        .page, .sub-page { display: none; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); width: 100%; }
         .page.active, .sub-page.active { display: block; }
         
-        h1 { border-bottom: 2px solid #3498db; padding-bottom: 10px; color: #2980b9; margin-top: 0; font-size: 22px;}
+        h1 { border-bottom: 2px solid #3498db; padding-bottom: 10px; color: #2980b9; margin-top: 0; font-size: 20px;}
         h2 { color: #2c3e50; font-size: 16px; border-bottom: 1px dashed #ccc; padding-bottom: 5px;}
         
-        .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; }
+        /* Grid Sistem Responsif */
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 20px; }
         .form-group { display: flex; flex-direction: column; }
         .form-group label { font-size: 11px; font-weight: bold; margin-bottom: 5px; color: #7f8c8d; }
-        .form-group input, .form-group select { padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; width: 100%; box-sizing: border-box; }
+        .form-group input, .form-group select { padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; width: 100%; }
         .form-group input[readonly] { background-color: #ecf0f1; font-weight: bold; }
         
         .btn-submit { background-color: #27ae60; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px;}
@@ -54,9 +57,10 @@
         .btn-excel { background-color: #27ae60; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold; }
         .btn-pdf { background-color: #c0392b; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold; }
 
-        .table-responsive { width: 100%; overflow-x: auto; margin-top: 15px; }
+        /* Tabel & Wrapper Scroll */
+        .table-responsive { width: 100%; overflow-x: auto; margin-top: 15px; -webkit-overflow-scrolling: touch; }
         table { width: 100%; border-collapse: collapse; min-width: 500px; font-size: 12px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; white-space: nowrap; }
         th { background-color: #3498db; color: white; }
         
         .badge { padding: 4px 8px; border-radius: 4px; color: white; font-size: 10px; font-weight: bold;}
@@ -64,7 +68,7 @@
         
         #status-db { font-size: 12px; color: #e74c3c; margin-bottom: 15px; font-weight: bold;}
 
-        .dash-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; }
+        .dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
         .dash-card { padding: 15px; border-radius: 8px; color: white; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .dash-card h3 { margin: 0 0 5px 0; font-size: 12px; text-transform: uppercase; opacity: 0.9;}
         .dash-card .nilai { font-size: 20px; font-weight: bold; }
@@ -78,22 +82,24 @@
         .report-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #ecf0f1; font-size: 13px; }
         .report-row.total { font-weight: bold; font-size: 15px; border-top: 2px solid #2c3e50; border-bottom: 2px solid #2c3e50; margin-top: 10px; color: #2c3e50; }
 
-        .chart-container { background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-top: 20px; }
+        .chart-container { background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-top: 20px; width: 100%; overflow-x: auto; }
         .chart-tabs { display: flex; gap: 8px; margin-bottom: 15px; overflow-x: auto; }
         .chart-tab-btn { padding: 6px 12px; border: none; background: #ecf0f1; cursor: pointer; border-radius: 4px; font-weight: bold; color: #555; font-size: 12px; white-space: nowrap;}
         .chart-tab-btn.active { background: #2c3e50; color: white; }
-        .chart-view { display: none; }
+        .chart-view { display: none; width: 100%; }
         .chart-view.active { display: block; }
 
-        @media screen and (max-width: 768px) {
-            body { display: block; }
-            .sidebar { width: 100%; height: auto; position: relative; padding-top: 10px; padding-bottom: 10px; display: flex; flex-wrap: wrap; justify-content: center; }
+        /* Media Query untuk Layar Tablet & HP (Maksimal 900px) */
+        @media screen and (max-width: 900px) {
+            body { flex-direction: column; }
+            #app-container { flex-direction: column; }
+            .sidebar { width: 100%; height: auto; position: relative; padding: 10px 0; display: flex; flex-wrap: wrap; justify-content: center; }
             .sidebar h2 { width: 100%; border: none; padding-bottom: 5px; font-size: 16px; }
             .menu-btn { width: auto; padding: 8px 12px; font-size: 12px; border-left: none !important; border-bottom: 3px solid transparent; }
             .menu-btn.active { border-bottom: 3px solid #3498db; background-color: #34495e; }
-            .main-content { margin-left: 0; width: 100%; padding: 10px; box-sizing: border-box; }
-            .form-grid { grid-template-columns: 1fr; }
-            .dash-grid { grid-template-columns: 1fr; }
+            .btn-logout { width: 90%; margin: 10px auto; }
+            
+            .main-content { margin-left: 0; width: 100%; padding: 10px; }
         }
 
         @media print {
@@ -118,7 +124,7 @@
         </div>
     </div>
 
-    <!-- KONTEN UTAMA ERP (DIKUNCI SEBELUM LOGIN) -->
+    <!-- KONTEN UTAMA ERP -->
     <div id="app-container">
         <div class="sidebar">
             <h2>⛺ Warung Khatulistiwa</h2>
@@ -129,7 +135,7 @@
             <button class="menu-btn" onclick="bukaMenu('stok', this)">5. Stok</button>
             <button class="menu-btn" onclick="bukaMenu('keuangan', this)">6. Keuangan</button>
             <button class="menu-btn" onclick="bukaMenu('akuntansi', this)" style="background-color: #16a085; color: white;">7. Akuntansi</button>
-            <div style="padding: 0 15px;"><button class="btn-logout" onclick="prosesLogout()">Keluar (Logout)</button></div>
+            <div style="width: 100%; text-align: center;"><button class="btn-logout" onclick="prosesLogout()">Keluar (Logout)</button></div>
         </div>
 
         <div class="main-content">
@@ -245,7 +251,7 @@
                     <div class="form-group"><label>Waktu</label><input type="datetime-local" id="stokWaktu"></div>
                     <div class="form-group"><label>Jenis</label><select id="stokJenis"><option>Masuk</option><option>Keluar</option></select></div>
                     <div class="form-group"><label>Qty</label><input type="number" id="stokQty" value="1"></div>
-                    <div class="form-group" style="grid-column: span 1;"><label>Keterangan</label><input type="text" id="stokKet"></div>
+                    <div class="form-group"><label>Keterangan</label><input type="text" id="stokKet"></div>
                 </div>
                 <button class="btn-submit" onclick="simpanLogStok()">Catat Stok</button>
                 <div class="export-container"><button class="btn-excel" onclick="eksporExcel('stok')">📊 Excel</button><button class="btn-pdf" onclick="eksporPDF('stok')">📄 PDF</button></div>
@@ -293,7 +299,7 @@
         </div>
     </div>
 
-    <!-- Firebase SDK (Auth & Database) -->
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -318,7 +324,6 @@ const firebaseConfig = {
         const auth = firebase.auth();
         const db = firebase.database();
 
-        // --- SISTEM AUTENTIKASI (LOGIN / LOGOUT) ---
         function prosesLogin() {
             let email = document.getElementById('loginEmail').value;
             let pass = document.getElementById('loginPassword').value;
