@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ERP Warung Khatulistiwa - Ultimate Version</title>
+    <title>ERP Warung Khatulistiwa - Print Fix Version</title>
     
     <!-- Library untuk Ekspor Excel, PDF, dan Grafik (Chart.js) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -88,6 +88,8 @@
         .chart-view { display: none; width: 100%; }
         .chart-view.active { display: block; }
 
+        #area-struk { display: none; } /* Secara default disembunyikan di layar komputer/tablet */
+
         @media screen and (max-width: 900px) {
             body { flex-direction: column; }
             #app-container { flex-direction: column; }
@@ -99,11 +101,38 @@
             .main-content { margin-left: 0; width: 100%; padding: 10px; }
         }
 
+        /* PERBAIKAN PENGATURAN CETAK (PRINT) UNTUK ANDROID & THERMAL 58mm */
         @media print {
-            body * { visibility: hidden !important; }
-            #area-struk, #area-struk * { visibility: visible !important; }
-            #area-struk { position: absolute; left: 0; top: 0; width: 57mm; font-family: 'Courier New', Courier, monospace; font-size: 12px; color: black; margin: 0; padding: 5px; }
-            .sidebar, .main-content h1, .form-grid, .btn-submit, .export-container, .table-responsive, #status-db { display: none !important; }
+            /* Sembunyikan semua UI website saat mau ngeprint */
+            #login-container, .sidebar, h1, h2, .form-grid, .btn-submit, .btn-sync, .btn-danger, .export-container, .table-responsive, .dash-grid, .chart-container, .alert-box, .tab-container, .report-box, #status-db { 
+                display: none !important; 
+            }
+            
+            /* Bersihkan margin dari pembungkus utamanya */
+            body, .main-content, #app-container, .page { 
+                margin: 0 !important; 
+                padding: 0 !important; 
+                background: white !important; 
+                width: 100% !important; 
+                box-shadow: none !important; 
+            }
+
+            /* Menginstruksikan browser merekomendasikan profil kertas thermal 58mm */
+            @page {
+                size: 58mm auto;
+                margin: 0;
+            }
+
+            /* HANYA area struk yang ditampilkan pada lembar cetak */
+            #area-struk { 
+                display: block !important; 
+                width: 58mm; 
+                margin: 0 auto;
+                padding: 0;
+                font-family: 'Courier New', Courier, monospace; 
+                font-size: 12px; 
+                color: black; 
+            }
         }
     </style>
 </head>
@@ -198,7 +227,7 @@
                 <div class="table-responsive"><table><thead><tr><th>No TRX</th><th>Waktu</th><th>Nama</th><th>Total</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="tabelTransaksi"></tbody></table></div>
                 
                 <!-- AREA STRUK CETAK -->
-                <div id="area-struk" style="display:none;">
+                <div id="area-struk">
                     <center><b>WARUNG KHATULISTIWA</b><br>------------------------<br></center>
                     No : <span id="strukNo"></span><br>
                     Tgl: <span id="strukTgl"></span><br>
@@ -500,7 +529,7 @@
             hitungTotal();
         }
 
-        // --- TRANSAKSI ---
+        // --- TRANSAKSI (Dengan Fix Print) ---
         function eksekusiSimpanTransaksi() {
             let no = document.getElementById('trxNo').value;
             let namaVal = document.getElementById('trxNama').value.trim();
@@ -534,13 +563,10 @@
             document.getElementById('strukNama').innerText = nama;
             document.getElementById('strukTotal').innerText = parseInt(total).toLocaleString();
 
-            let struk = document.getElementById('area-struk');
-            struk.style.display = 'block';
-
-            // Beri jeda sejenak agar browser selesai merender teks struk ke DOM sebelum dialog print terbuka
+            // Kita biarkan CSS yang mengatur penampilannya melalui @media print, 
+            // sehingga kita TIDAK PERLU menambah/mengubah display elemen via javascript saat sedang proses print.
             setTimeout(() => {
                 window.print();
-                struk.style.display = 'none';
             }, 300);
         }
 
@@ -700,7 +726,7 @@
             datalistKasir.innerHTML = listHtml;
         });
 
-        // --- ARUS STOK ---
+        // --- ARUS STok ---
         document.getElementById('stokWaktu').value = WaktuLokal();
         function eksekusiSimpanLogStok() {
             let k=document.getElementById('stokProduk').value, qty=parseInt(document.getElementById('stokQty').value)||0, jen=document.getElementById('stokJenis').value, idLog="LOG-"+new Date().getTime();
