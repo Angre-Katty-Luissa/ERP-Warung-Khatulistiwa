@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ERP Warung Khatulistiwa - Integrated Version</title>
+    <title>ERP Warung Khatulistiwa - Ultimate Version</title>
     
     <!-- Library untuk Ekspor Excel, PDF, dan Grafik (Chart.js) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -100,10 +100,10 @@
         }
 
         @media print {
-            body * { visibility: hidden; }
-            #area-struk, #area-struk * { visibility: visible; }
-            #area-struk { position: absolute; left: 0; top: 0; width: 57mm; font-family: 'Courier New', Courier, monospace; font-size: 12px; color: black; margin: 0; padding: 0; }
-            .sidebar, .main-content h1 { display: none; }
+            body * { visibility: hidden !important; }
+            #area-struk, #area-struk * { visibility: visible !important; }
+            #area-struk { position: absolute; left: 0; top: 0; width: 57mm; font-family: 'Courier New', Courier, monospace; font-size: 12px; color: black; margin: 0; padding: 5px; }
+            .sidebar, .main-content h1, .form-grid, .btn-submit, .export-container, .table-responsive, #status-db { display: none !important; }
         }
     </style>
 </head>
@@ -196,10 +196,19 @@
                 <button class="btn-submit" onclick="konfirmasiSimpan('transaksi')">Simpan & Cetak Struk</button>
                 <div class="export-container"><button class="btn-excel" onclick="eksporExcel('transaksi')">📊 Excel</button><button class="btn-pdf" onclick="eksporPDF('transaksi')">📄 PDF</button></div>
                 <div class="table-responsive"><table><thead><tr><th>No TRX</th><th>Waktu</th><th>Nama</th><th>Total</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="tabelTransaksi"></tbody></table></div>
+                
+                <!-- AREA STRUK CETAK -->
                 <div id="area-struk" style="display:none;">
                     <center><b>WARUNG KHATULISTIWA</b><br>------------------------<br></center>
-                    No : <span id="strukNo"></span><br>Tgl: <span id="strukTgl"></span><br>Pel: <span id="strukPel"></span><br>------------------------<br>
-                    <span id="strukNama"></span><br>------------------------<br><b>TOTAL: Rp <span id="strukTotal"></span></b><br>------------------------<br><center>Terima Kasih</center>
+                    No : <span id="strukNo"></span><br>
+                    Tgl: <span id="strukTgl"></span><br>
+                    Pel: <span id="strukPel"></span><br>
+                    ------------------------<br>
+                    <span id="strukNama"></span><br>
+                    ------------------------<br>
+                    <b>TOTAL: Rp <span id="strukTotal"></span></b><br>
+                    ------------------------<br>
+                    <center>Terima Kasih</center>
                 </div>
             </div>
 
@@ -519,8 +528,20 @@
         }
 
         function cetakStruk(no, waktu, pel, nama, total) {
-            document.getElementById('strukNo').innerText=no; document.getElementById('strukTgl').innerText=waktu.replace('T',' '); document.getElementById('strukPel').innerText=pel; document.getElementById('strukNama').innerText=nama; document.getElementById('strukTotal').innerText=parseInt(total).toLocaleString();
-            let struk = document.getElementById('area-struk'); struk.style.display='block'; window.print(); struk.style.display='none';
+            document.getElementById('strukNo').innerText = no;
+            document.getElementById('strukTgl').innerText = waktu.replace('T', ' ');
+            document.getElementById('strukPel').innerText = pel;
+            document.getElementById('strukNama').innerText = nama;
+            document.getElementById('strukTotal').innerText = parseInt(total).toLocaleString();
+
+            let struk = document.getElementById('area-struk');
+            struk.style.display = 'block';
+
+            // Beri jeda sejenak agar browser selesai merender teks struk ke DOM sebelum dialog print terbuka
+            setTimeout(() => {
+                window.print();
+                struk.style.display = 'none';
+            }, 300);
         }
 
         let totalOmsetG = 0, trxHariIniG = 0, omsetHariIniG = 0;
