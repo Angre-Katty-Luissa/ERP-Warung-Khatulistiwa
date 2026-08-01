@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ERP Warung Khatulistiwa - Print Fix Version</title>
     
-    <!-- Library untuk Ekspor Excel, PDF, dan Grafik (Chart.js) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
@@ -104,41 +103,24 @@
         /* PERBAIKAN PENGATURAN CETAK (PRINT) UNTUK ANDROID & THERMAL 58mm */
         @media print {
             /* Sembunyikan semua UI website saat mau ngeprint */
-            #login-container, .sidebar, h1, h2, .form-grid, .btn-submit, .btn-sync, .btn-danger, .export-container, .table-responsive, .dash-grid, .chart-container, .alert-box, .tab-container, .report-box, #status-db { 
+            #login-container, .sidebar, h1, h2, .form-grid, .btn-submit, .btn-sync, .btn-danger, .export-container, .table-responsive, .dash-grid, .chart-container, .alert-box, .tab-container, .report-box, #status-db, #filterDashboard { 
                 display: none !important; 
             }
             
-            /* Bersihkan margin dari pembungkus utamanya */
             body, .main-content, #app-container, .page { 
-                margin: 0 !important; 
-                padding: 0 !important; 
-                background: white !important; 
-                width: 100% !important; 
-                box-shadow: none !important; 
+                margin: 0 !important; padding: 0 !important; background: white !important; width: 100% !important; box-shadow: none !important; 
             }
 
-            /* Menginstruksikan browser merekomendasikan profil kertas thermal 58mm */
-            @page {
-                size: 58mm auto;
-                margin: 0;
-            }
+            @page { size: 58mm auto; margin: 0; }
 
-            /* HANYA area struk yang ditampilkan pada lembar cetak */
             #area-struk { 
-                display: block !important; 
-                width: 58mm; 
-                margin: 0 auto;
-                padding: 0;
-                font-family: 'Courier New', Courier, monospace; 
-                font-size: 12px; 
-                color: black; 
+                display: block !important; width: 58mm; margin: 0 auto; padding: 0; font-family: 'Courier New', Courier, monospace; font-size: 12px; color: black; 
             }
         }
     </style>
 </head>
 <body>
 
-    <!-- HALAMAN LOGIN -->
     <div id="login-container">
         <div class="login-box">
             <h2>⛺ Login ERP</h2>
@@ -150,7 +132,6 @@
         </div>
     </div>
 
-    <!-- KONTEN UTAMA ERP -->
     <div id="app-container">
         <div class="sidebar">
             <h2>⛺ Warung Khatulistiwa</h2>
@@ -168,7 +149,6 @@
         <div class="main-content">
             <div id="status-db">Menghubungkan ke database...</div>
 
-            <!-- DASHBOARD -->
             <div id="dashboard" class="page active">
                 <h1>Dashboard & Grafik</h1>
                 <p style="color: #7f8c8d; font-weight: bold; font-size: 13px;">📅 Hari Ini: <span id="dashTanggal"></span></p>
@@ -199,14 +179,22 @@
                 </div>
             </div>
 
-            <!-- KASIR & TRANSAKSI -->
             <div id="transaksi" class="page">
                 <h1>Form Kasir & History</h1>
                 <div class="form-grid">
                     <div class="form-group"><label>No TRX</label><input type="text" id="trxNo" readonly></div>
                     <div class="form-group"><label>Tanggal & Waktu</label><input type="datetime-local" id="trxTanggal"></div>
                     <div class="form-group"><label>Pelanggan</label><select id="trxPelanggan"><option>Umum</option><option>Keluarga</option><option>Pribadi</option></select></div>
-                    <div class="form-group"><label>Media</label><select id="trxMedia"><option>Warung</option><option>Agen Mandiri</option><option>Gopay</option><option>Tokopedia</option></select></div>
+                    <div class="form-group">
+                        <label>Media</label>
+                        <select id="trxMedia">
+                            <option>Warung</option>
+                            <option>Agen Mandiri</option>
+                            <option>Gopay</option>
+                            <option>Tokopedia</option>
+                            <option>Wondr</option>
+                        </select>
+                    </div>
                     
                     <div class="form-group">
                         <label>Nama Transaksi / Produk</label>
@@ -223,10 +211,62 @@
                     <div class="form-group"><label>TOTAL BAYAR (Rp)</label><input type="number" id="trxTotal" readonly style="color: #c0392b; font-size: 16px;"></div>
                 </div>
                 <button class="btn-submit" onclick="konfirmasiSimpan('transaksi')">Simpan & Cetak Struk</button>
-                <div class="export-container"><button class="btn-excel" onclick="eksporExcel('transaksi')">📊 Excel</button><button class="btn-pdf" onclick="eksporPDF('transaksi')">📄 PDF</button></div>
+                
+                <div class="report-box" style="margin-top:20px;">
+                    <h2>🔍 Filter & Analisis Riwayat Transaksi</h2>
+                    <div class="form-grid">
+                        <div class="form-group"><label>Mulai Tanggal</label><input type="date" id="filterTglMulai"></div>
+                        <div class="form-group"><label>Sampai Tanggal</label><input type="date" id="filterTglAkhir"></div>
+                        <div class="form-group">
+                            <label>Media</label>
+                            <select id="filterMedia">
+                                <option value="Semua">Semua</option>
+                                <option>Warung</option>
+                                <option>Agen Mandiri</option>
+                                <option>Gopay</option>
+                                <option>Tokopedia</option>
+                                <option>Wondr</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Metode Bayar</label>
+                            <select id="filterMetode">
+                                <option value="Semua">Semua</option>
+                                <option>Cash</option>
+                                <option>QRIS</option>
+                                <option>Transfer</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Pelanggan</label>
+                            <select id="filterPelanggan">
+                                <option value="Semua">Semua</option>
+                                <option>Umum</option>
+                                <option>Keluarga</option>
+                                <option>Pribadi</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:10px;">
+                        <button class="btn-sync" onclick="terapkanFilter()" style="margin-top:5px; background-color:#8e44ad;">Terpakan Filter & Buat Grafik</button>
+                        <button class="btn-danger" onclick="resetFilter()" style="margin-top:5px; background-color:#7f8c8d;">Reset Data</button>
+                    </div>
+                </div>
+
+                <div id="filterDashboard" style="display:none; margin-top: 20px;">
+                    <div class="dash-grid">
+                        <div class="dash-card" style="background-color:#16a085;"><h3>Total Transaksi Hasil Filter</h3><div class="nilai" id="fltJmlTrx">0</div></div>
+                        <div class="dash-card" style="background-color:#2980b9;"><h3>Total Omset Hasil Filter</h3><div class="nilai" id="fltTotalOmset">Rp 0</div></div>
+                    </div>
+                    <div class="chart-container" style="margin-bottom:20px;">
+                        <h2>📈 Grafik Omset Berdasarkan Filter</h2>
+                        <canvas id="chartFilter"></canvas>
+                    </div>
+                </div>
+
+                <div class="export-container"><button class="btn-excel" onclick="eksporExcel('transaksi')">📊 Ekspor Excel Keseluruhan</button></div>
                 <div class="table-responsive"><table><thead><tr><th>No TRX</th><th>Waktu</th><th>Nama</th><th>Total</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="tabelTransaksi"></tbody></table></div>
                 
-                <!-- AREA STRUK CETAK -->
                 <div id="area-struk">
                     <center><b>WARUNG KHATULISTIWA</b><br>------------------------<br></center>
                     No : <span id="strukNo"></span><br>
@@ -241,7 +281,6 @@
                 </div>
             </div>
 
-            <!-- WAKTU OPERASI -->
             <div id="operasi" class="page">
                 <h1>Waktu Operasi</h1>
                 <div class="form-grid">
@@ -258,12 +297,10 @@
                 <div class="table-responsive"><table><thead><tr><th>Tanggal</th><th>Hari</th><th>Status</th><th>Buka-Tutup</th><th>Pelanggan</th><th>Aksi</th></tr></thead><tbody id="tabelOperasi"></tbody></table></div>
             </div>
 
-            <!-- PRICE LIST -->
             <div id="pricelist" class="page">
                 <h1>Price List</h1>
                 <div class="tab-container"><button class="tab-btn active" onclick="bukaSubTab('digital', this)">🌐 Digital</button><button class="tab-btn" onclick="bukaSubTab('nondigital', this)">📦 Non-Digital</button></div>
                 
-                <!-- Digital Sub-Tab -->
                 <div id="digital" class="sub-page active">
                     <div class="form-grid">
                         <div class="form-group"><label>Nama Produk</label><input type="text" id="plDigNama" placeholder="Contoh: Telkomsel 10rb" oninput="generateKodeDigital()"></div>
@@ -285,7 +322,6 @@
                     <div class="table-responsive"><table><thead><tr><th>Kode</th><th>Nama Produk</th><th>Jenis</th><th>Nominal</th><th>Admin</th><th>Aksi</th></tr></thead><tbody id="tabelPLDigital"></tbody></table></div>
                 </div>
 
-                <!-- Non-Digital Sub-Tab -->
                 <div id="nondigital" class="sub-page">
                     <div class="form-grid">
                         <div class="form-group"><label>Nama Produk</label><input type="text" id="plNonNama" placeholder="Contoh: Beras Ramos 5Kg" oninput="generateKodeNonDigital()"></div>
@@ -307,7 +343,6 @@
                 </div>
             </div>
 
-            <!-- ARUS STOK -->
             <div id="stok" class="page">
                 <h1>Arus Stok</h1>
                 <div class="form-grid">
@@ -325,7 +360,6 @@
                 <div class="table-responsive"><table><thead><tr><th>Kode</th><th>Nama</th><th>Sisa</th></tr></thead><tbody id="tabelStokTotal"></tbody></table></div>
             </div>
 
-            <!-- KEUANGAN -->
             <div id="keuangan" class="page">
                 <h1>Laporan Keuangan</h1>
                 <div class="dash-grid">
@@ -345,7 +379,6 @@
                 <div class="table-responsive"><table><thead><tr><th>Waktu</th><th>Kategori</th><th>Nominal</th><th>Ket</th><th>Aksi</th></tr></thead><tbody id="tabelPengeluaran"></tbody></table></div>
             </div>
 
-            <!-- AKUNTANSI -->
             <div id="akuntansi" class="page">
                 <h1>Akuntansi & Laporan Formal</h1>
                 <div class="export-container" style="margin-bottom: 20px;">
@@ -365,7 +398,6 @@
                 </div>
             </div>
 
-            <!-- MODUL 9: LEGALITAS WARUNG -->
             <div id="legalitas" class="page">
                 <h1>Legalitas & Informasi Warung</h1>
                 <div class="report-box">
@@ -383,7 +415,6 @@
         </div>
     </div>
 
-    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -486,7 +517,8 @@
             return nd.toISOString().slice(0,16);
         }
 
-        let myChartMingguan = null, myChartBulanan = null, myChartTahunan = null;
+        let myChartMingguan = null, myChartBulanan = null, myChartTahunan = null, myChartFilter = null;
+        
         function inisialisasiChart(dataMingguan, dataBulanan, dataTahunan) {
             const ctxM = document.getElementById('chartMingguan').getContext('2d');
             if(myChartMingguan) myChartMingguan.destroy();
@@ -509,10 +541,12 @@
         setFormTrx();
 
         function hitungTotal() {
+            let qty = parseInt(document.getElementById('trxQty').value) || 1; 
             let n = parseInt(document.getElementById('trxNominal').value) || 0;
             let ta = parseInt(document.getElementById('trxTotalAdmin').value) || 0;
             let d = parseInt(document.getElementById('trxDiskon').value) || 0;
-            let t = n + ta - d; 
+            
+            let t = (n * qty) + ta - d;
             document.getElementById('trxTotal').value = t > 0 ? t : 0;
         }
 
@@ -529,18 +563,31 @@
             hitungTotal();
         }
 
-        // --- TRANSAKSI (Dengan Fix Print) ---
+        // --- TRANSAKSI ---
         function eksekusiSimpanTransaksi() {
             let no = document.getElementById('trxNo').value;
             let namaVal = document.getElementById('trxNama').value.trim();
             if(!namaVal) namaVal = "Lain-lain";
             
             const dataTrx = {
-                no_trx: no, waktu: document.getElementById('trxTanggal').value, pelanggan: document.getElementById('trxPelanggan').value, nama: namaVal, total_bayar: parseInt(document.getElementById('trxTotal').value)||0, status: document.getElementById('trxStatus').value
+                no_trx: no, 
+                waktu: document.getElementById('trxTanggal').value, 
+                pelanggan: document.getElementById('trxPelanggan').value, 
+                media: document.getElementById('trxMedia').value,
+                metode: document.getElementById('trxMetode').value,
+                nama: namaVal, 
+                total_bayar: parseInt(document.getElementById('trxTotal').value)||0, 
+                status: document.getElementById('trxStatus').value
             };
+
             db.ref('warung/transaksi/'+no).set(dataTrx).then(()=>{
                 cetakStruk(no, dataTrx.waktu, dataTrx.pelanggan, dataTrx.nama, dataTrx.total_bayar);
-                document.getElementById('trxNama').value=''; document.getElementById('trxNominal').value=''; document.getElementById('trxTotalAdmin').value=''; document.getElementById('trxTotal').value=''; setFormTrx();
+                document.getElementById('trxNama').value=''; 
+                document.getElementById('trxNominal').value=''; 
+                document.getElementById('trxQty').value='1';
+                document.getElementById('trxTotalAdmin').value=''; 
+                document.getElementById('trxTotal').value=''; 
+                setFormTrx();
             });
         }
         function editTransaksi(no, waktu, pel, nama, total, status) {
@@ -563,18 +610,106 @@
             document.getElementById('strukNama').innerText = nama;
             document.getElementById('strukTotal').innerText = parseInt(total).toLocaleString();
 
-            // Kita biarkan CSS yang mengatur penampilannya melalui @media print, 
-            // sehingga kita TIDAK PERLU menambah/mengubah display elemen via javascript saat sedang proses print.
-            setTimeout(() => {
-                window.print();
-            }, 300);
+            setTimeout(() => { window.print(); }, 300);
+        }
+
+        function renderTabelTransaksi(dataArray) {
+            let tTrx = document.getElementById('tabelTransaksi');
+            tTrx.innerHTML = '';
+            dataArray.forEach(t => {
+                let bg = t.status==="Sukses" ? "bg-success" : "bg-danger";
+                tTrx.innerHTML += `<tr><td>${t.no_trx}</td><td>${t.waktu.replace('T',' ')}</td><td>${t.nama}</td><td>Rp ${t.total_bayar.toLocaleString()}</td><td><span class="badge ${bg}">${t.status}</span></td><td><div class="btn-action-container"><button class="btn-print" onclick="cetakStruk('${t.no_trx}','${t.waktu}','${t.pelanggan}','${t.nama}','${t.total_bayar}')">Cetak</button><button class="btn-edit" onclick="editTransaksi('${t.no_trx}','${t.waktu}','${t.pelanggan}','${t.nama}',${t.total_bayar},'${t.status}')">Edit</button><button class="btn-del" onclick="hapusTransaksi('${t.no_trx}')">Hapus</button></div></td></tr>`;
+            });
+        }
+
+        // [FITUR BARU] Mengupdate Ringkasan & Grafik Khusus Filter
+        function updateDashboardFilter(filteredData) {
+            document.getElementById('filterDashboard').style.display = 'block';
+            
+            let totalTransaksi = 0;
+            let totalOmset = 0;
+            let dataPerTgl = {};
+
+            filteredData.forEach(t => {
+                if (t.status === "Sukses") {
+                    totalTransaksi++;
+                    totalOmset += t.total_bayar;
+                    
+                    let tglTrx = t.waktu.split('T')[0];
+                    dataPerTgl[tglTrx] = (dataPerTgl[tglTrx] || 0) + t.total_bayar;
+                }
+            });
+
+            document.getElementById('fltJmlTrx').innerText = totalTransaksi;
+            document.getElementById('fltTotalOmset').innerText = 'Rp ' + totalOmset.toLocaleString();
+
+            let labelsChart = Object.keys(dataPerTgl).sort();
+            let dataChart = labelsChart.map(k => dataPerTgl[k]);
+
+            const ctxF = document.getElementById('chartFilter').getContext('2d');
+            if(myChartFilter) myChartFilter.destroy();
+            myChartFilter = new Chart(ctxF, { 
+                type: 'bar', 
+                data: { 
+                    labels: labelsChart, 
+                    datasets: [{ 
+                        label: 'Omset Filter (Rp)', 
+                        data: dataChart, 
+                        backgroundColor: '#8e44ad' 
+                    }] 
+                }, 
+                options: { 
+                    responsive: true, 
+                    scales: { y: { beginAtZero: true } } 
+                } 
+            });
+        }
+
+        function terapkanFilter() {
+            let tglMulai = document.getElementById('filterTglMulai').value;
+            let tglAkhir = document.getElementById('filterTglAkhir').value;
+            let media = document.getElementById('filterMedia').value;
+            let metode = document.getElementById('filterMetode').value;
+            let pelanggan = document.getElementById('filterPelanggan').value;
+
+            let filteredData = dataTransaksiGlobal.filter(t => {
+                let match = true;
+                let tglTrx = t.waktu.split('T')[0];
+
+                if (tglMulai && tglTrx < tglMulai) match = false;
+                if (tglAkhir && tglTrx > tglAkhir) match = false;
+                if (media !== "Semua" && t.media !== media) match = false;
+                if (metode !== "Semua" && t.metode !== metode) match = false;
+                if (pelanggan !== "Semua" && t.pelanggan !== pelanggan) match = false;
+
+                return match;
+            });
+
+            // Update tabel dengan data filter (tabel selalu merender data terbalik/terbaru ke atas)
+            renderTabelTransaksi([...filteredData].reverse());
+
+            // Memanggil fungsi baru untuk menampilkan mini dashboard & chart
+            updateDashboardFilter(filteredData);
+        }
+
+        function resetFilter() {
+            document.getElementById('filterTglMulai').value = '';
+            document.getElementById('filterTglAkhir').value = '';
+            document.getElementById('filterMedia').value = 'Semua';
+            document.getElementById('filterMetode').value = 'Semua';
+            document.getElementById('filterPelanggan').value = 'Semua';
+            
+            // Sembunyikan kembali dashboard filter jika reset
+            document.getElementById('filterDashboard').style.display = 'none';
+
+            renderTabelTransaksi([...dataTransaksiGlobal].reverse());
         }
 
         let totalOmsetG = 0, trxHariIniG = 0, omsetHariIniG = 0;
         let dataTransaksiGlobal = [];
         db.ref('warung/transaksi').on('value', snap => {
             document.getElementById('status-db').innerText="🟢 Terkoneksi (Sistem Aman)"; document.getElementById('status-db').style.color="#27ae60";
-            let tTrx = document.getElementById('tabelTransaksi'); tTrx.innerHTML='';
+            
             trxHariIniG = 0; omsetHariIniG = 0; totalOmsetG = 0; dataTransaksiGlobal = [];
             
             let mapMingguan = {}, mapBulanan = Array(12).fill(0), mapTahunan = {};
@@ -586,7 +721,12 @@
             }
 
             snap.forEach(c => { 
-                let t = c.val(); dataTransaksiGlobal.push(t); 
+                let t = c.val(); 
+                if(!t.media) t.media = "Warung";
+                if(!t.metode) t.metode = "Cash";
+
+                dataTransaksiGlobal.push(t); 
+                
                 if(t.status==="Sukses") {
                     totalOmsetG += t.total_bayar;
                     let tglTrx = t.waktu.split('T')[0];
@@ -611,11 +751,7 @@
 
             inisialisasiChart({ labels: hariLabels, values: valMingguan }, mapBulanan, { labels: keysTahunan, values: valTahunan });
 
-            let arrRev = [...dataTransaksiGlobal].reverse();
-            arrRev.forEach(t => {
-                let bg = t.status==="Sukses"?"bg-success":"bg-danger";
-                tTrx.innerHTML+=`<tr><td>${t.no_trx}</td><td>${t.waktu.replace('T',' ')}</td><td>${t.nama}</td><td>Rp ${t.total_bayar.toLocaleString()}</td><td><span class="badge ${bg}">${t.status}</span></td><td><div class="btn-action-container"><button class="btn-print" onclick="cetakStruk('${t.no_trx}','${t.waktu}','${t.pelanggan}','${t.nama}','${t.total_bayar}')">Cetak</button><button class="btn-edit" onclick="editTransaksi('${t.no_trx}','${t.waktu}','${t.pelanggan}','${t.nama}',${t.total_bayar},'${t.status}')">Edit</button><button class="btn-del" onclick="hapusTransaksi('${t.no_trx}')">Hapus</button></div></td></tr>`;
-            });
+            resetFilter(); 
             hitungLabaRugi(); renderAkuntansi();
         });
 
@@ -726,7 +862,7 @@
             datalistKasir.innerHTML = listHtml;
         });
 
-        // --- ARUS STok ---
+        // --- ARUS STOK ---
         document.getElementById('stokWaktu').value = WaktuLokal();
         function eksekusiSimpanLogStok() {
             let k=document.getElementById('stokProduk').value, qty=parseInt(document.getElementById('stokQty').value)||0, jen=document.getElementById('stokJenis').value, idLog="LOG-"+new Date().getTime();
