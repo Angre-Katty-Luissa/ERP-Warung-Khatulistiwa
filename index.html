@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ERP Warung Khatulistiwa - Confirm Version</title>
+    <title>ERP Warung Khatulistiwa - Integrated Version</title>
     
     <!-- Library untuk Ekspor Excel, PDF, dan Grafik (Chart.js) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -187,7 +187,7 @@
 
                     <div class="form-group"><label>Qty</label><input type="number" id="trxQty" value="1" oninput="hitungTotal()"></div>
                     <div class="form-group"><label>Nominal (Rp)</label><input type="number" id="trxNominal" oninput="hitungTotal()"></div>
-                    <div class="form-group"><label>Admin (Rp)</label><input type="number" id="trxAdmin" oninput="hitungTotal()"></div>
+                    <div class="form-group"><label>Total Admin (Rp)</label><input type="number" id="trxTotalAdmin" oninput="hitungTotal()"></div>
                     <div class="form-group"><label>Diskon (Rp)</label><input type="number" id="trxDiskon" oninput="hitungTotal()"></div>
                     <div class="form-group"><label>Metode</label><select id="trxMetode"><option>Cash</option><option>QRIS</option><option>Transfer</option></select></div>
                     <div class="form-group"><label>Status</label><select id="trxStatus"><option>Sukses</option><option>Pending</option><option>Batal</option></select></div>
@@ -407,7 +407,6 @@
             document.getElementById('view-' + jenis).classList.add('active'); btn.classList.add('active');
         }
 
-        // --- KONFIRMASI SIMPAN (SIMPAN / CANCEL) ---
         function konfirmasiSimpan(modul) {
             if (confirm("Apakah Anda yakin ingin menyimpan data ini?")) {
                 if (modul === 'transaksi') eksekusiSimpanTransaksi();
@@ -472,17 +471,24 @@
         setFormTrx();
 
         function hitungTotal() {
-            let n=parseInt(document.getElementById('trxNominal').value)||0, a=parseInt(document.getElementById('trxAdmin').value)||0, d=parseInt(document.getElementById('trxDiskon').value)||0;
-            let t = n+a-d; document.getElementById('trxTotal').value = t>0?t:0;
+            let n = parseInt(document.getElementById('trxNominal').value) || 0;
+            let ta = parseInt(document.getElementById('trxTotalAdmin').value) || 0;
+            let d = parseInt(document.getElementById('trxDiskon').value) || 0;
+            let t = n + ta - d; 
+            document.getElementById('trxTotal').value = t > 0 ? t : 0;
         }
 
         let daftarHargaProduk = {};
+        let daftarTotalAdminProduk = {};
         function cekPilihanProdukKasir() {
             let val = document.getElementById('trxNama').value;
-            if(daftarHargaProduk[val]) {
+            if(daftarHargaProduk[val] !== undefined) {
                 document.getElementById('trxNominal').value = daftarHargaProduk[val];
-                hitungTotal();
             }
+            if(daftarTotalAdminProduk[val] !== undefined) {
+                document.getElementById('trxTotalAdmin').value = daftarTotalAdminProduk[val];
+            }
+            hitungTotal();
         }
 
         // --- TRANSAKSI ---
@@ -496,7 +502,7 @@
             };
             db.ref('warung/transaksi/'+no).set(dataTrx).then(()=>{
                 cetakStruk(no, dataTrx.waktu, dataTrx.pelanggan, dataTrx.nama, dataTrx.total_bayar);
-                document.getElementById('trxNama').value=''; document.getElementById('trxNominal').value=''; document.getElementById('trxTotal').value=''; setFormTrx();
+                document.getElementById('trxNama').value=''; document.getElementById('trxNominal').value=''; document.getElementById('trxTotalAdmin').value=''; document.getElementById('trxTotal').value=''; setFormTrx();
             });
         }
         function editTransaksi(no, waktu, pel, nama, total, status) {
@@ -630,11 +636,13 @@
             let t=document.getElementById('tabelPLDigital'), datalistKasir = document.getElementById('listProdukKasir'); 
             t.innerHTML=''; 
             let listHtml = '<option value="Lain-lain">';
+            daftarTotalAdminProduk = {};
             snap.forEach(c=>{ 
                 let d=c.val(); 
                 t.innerHTML+=`<tr><td>${d.kode}</td><td>${d.nama}</td><td>${d.jenis}</td><td>Rp ${parseInt(d.nominal||0).toLocaleString()}</td><td>Rp ${parseInt(d.total||0).toLocaleString()}</td><td><div class="btn-action-container"><button class="btn-edit" onclick="editPLDigital('${d.kode}','${d.nama}','${d.jenis}',${d.nominal||0},${d.total||0})">Edit</button><button class="btn-del" onclick="hapusPLDigital('${d.kode}')">Hapus</button></div></td></tr>`;
                 listHtml += `<option value="${d.nama}">`;
-                daftarHargaProduk[d.nama] = parseInt(d.total || 0);
+                daftarHargaProduk[d.nama] = parseInt(d.nominal || 0);
+                daftarTotalAdminProduk[d.nama] = parseInt(d.total || 0);
             }); 
             datalistKasir.innerHTML = listHtml;
         });
