@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ERP Warung Khatulistiwa - with Pengeluaran Pribadi</title>
+    <title>ERP Warung Khatulistiwa - Final Clean</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -872,7 +872,6 @@
                 let p = c.val();
                 dataArr.push(p);
 
-                // Rekap pivot
                 let kat = p.jajan_siapa || "Lainnya";
                 if(!pivotMap[kat]) {
                     pivotMap[kat] = { satuan: 0, rupiah: 0 };
@@ -881,7 +880,6 @@
                 pivotMap[kat].rupiah += parseInt(p.nominal || 0);
             });
 
-            // Render Riwayat
             [...dataArr].reverse().forEach(p => {
                 tabelRiwayat.innerHTML += `<tr>
                     <td>${p.tanggal}</td>
@@ -896,7 +894,6 @@
                 tabelRiwayat.innerHTML = `<tr><td colspan="5" style="text-align:center;">Belum ada data pengeluaran pribadi</td></tr>`;
             }
 
-            // Render Pivot
             tabelPivot.innerHTML = '';
             let adaPivot = false;
             let totalSatuanGlobal = 0, totalRupiahGlobal = 0;
