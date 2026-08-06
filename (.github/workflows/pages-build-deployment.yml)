@@ -1,0 +1,80 @@
+name: Pages build and deploy
+
+on:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages-deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    # Naikkan timeout job total (maks 360 menit)
+    timeout-minutes: 180
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then npm ci; elif [ -f yarn.lock ]; then npm ci; fi
+
+      - name: Build site
+        run: |
+          # Ganti perintah build sesuai project Anda
+          if [ -f package.json ]; then npm run build --if-present; fi
+        env:
+          CI: true
+
+      - name: Inspect build output size and file count
+        run: |
+          BUILD_DIR=./public
+          if [ ! -d "$BUILD_DIR" ]; then
+            echo "Build directory $BUILD_DIR not found — adjust BUILD_DIR in workflow.";
+            exit 1;
+          fi
+          echo "== Disk usage =="
+          du -sh "$BUILD_DIR" || true
+          echo "== File count =="
+          find "$BUILD_DIR" -type f | wc -l || true
+
+          # List files larger than 5MB to help debugging slow uploads
+          echo "== Files >5MB =="
+          find "$BUILD_DIR" -type f -size +5M -exec ls -lh {} \; || true
+
+          SIZE_MB=$(du -sm "$BUILD_DIR" | cut -f1 || echo 0)
+          echo "SIZE_MB=$SIZE_MB"
+          if [ "$SIZE_MB" -gt 800 ]; then
+            echo "Artifact is very large (>$SIZE_MB MB). Consider optimizing assets before deploying.";
+            # Uncomment exit 1 to fail early when artifact is huge:
+            # exit 1
+          fi
+
+      - name: Strip unnecessary files from output (remove sourcemaps)
+        run: |
+          BUILD_DIR=./public
+          echo "Removing sourcemaps (*.map) from $BUILD_DIR"
+          find "$BUILD_DIR" -type f -name '*.map' -print -delete || true
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        timeout-minutes: 90
+        with:
+          path: ./public
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
+        timeout-minutes: 30
