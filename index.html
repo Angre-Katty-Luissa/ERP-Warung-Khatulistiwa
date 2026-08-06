@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ERP Warung Khatulistiwa - Uniform Sidebar</title>
+    <title>ERP Warung Khatulistiwa - Fix Pivot & Sidebar</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -56,7 +56,7 @@
         .btn-pdf { background-color: #c0392b; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; }
 
         .table-responsive { width: 100%; overflow-x: auto; margin-top: 10px; -webkit-overflow-scrolling: touch; }
-        table { width: 100%; border-collapse: collapse; min-width: 700px; font-size: 11px; }
+        table { width: 100%; border-collapse: collapse; min-width: 100%; font-size: 11px; }
         th, td { border: 1px solid #ddd; padding: 6px 8px; text-align: left; white-space: nowrap; }
         th { background-color: #3498db; color: white; }
         
@@ -90,7 +90,7 @@
 
         #pivotSummary {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 12px;
             margin-bottom: 15px;
             width: 100%;
@@ -1002,17 +1002,18 @@
             document.getElementById('hasilFltLaba').innerText = 'Rp ' + labaT.toLocaleString();
 
             function buatHtmlPivot(judul, objData) {
-                let html = `<div class="report-box" style="margin-bottom:0; padding:10px;">
+                let html = `<div class="report-box" style="margin-bottom:0; padding:10px; width:100%; overflow:hidden;">
                     <h3 style="margin-top:0; color:#2c3e50; font-size:12px; border-bottom:1px dashed #ccc; padding-bottom:4px;">${judul}</h3>
-                    <table style="width:100%; font-size:11px;">
-                        <thead>
-                            <tr>
-                                <th style="background:#34495e;">Kategori</th>
-                                <th style="background:#34495e; text-align:center;">Jumlah (Satuan)</th>
-                                <th style="background:#34495e; text-align:right;">Jumlah (Rupiah)</th>
-                            </tr>
-                        </thead>
-                        <tbody>`;
+                    <div class="table-responsive">
+                        <table style="width:100%; font-size:11px;">
+                            <thead>
+                                <tr>
+                                    <th style="background:#34495e;">Kategori</th>
+                                    <th style="background:#34495e; text-align:center;">Jumlah (Satuan)</th>
+                                    <th style="background:#34495e; text-align:right;">Jumlah (Rupiah)</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
                 for(let key in objData) {
                     html += `<tr>
                         <td><b>${key}</b></td>
@@ -1020,7 +1021,7 @@
                         <td style="text-align:right;">Rp ${objData[key].sum.toLocaleString()}</td>
                     </tr>`;
                 }
-                html += `</tbody></table></div>`;
+                html += `</tbody></table></div></div>`;
                 return html;
             }
 
