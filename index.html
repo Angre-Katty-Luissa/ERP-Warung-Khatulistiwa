@@ -513,18 +513,21 @@
         }
 
         let daftarHargaProduk = {}, daftarTotalAdminProduk = {};
+        
+        // PERBAIKAN: Fungsi integrasi Pilihan Produk & Total Admin dari Price List
         function cekPilihanProdukKasir() {
             let val = document.getElementById('trxNama').value;
-            if(daftarHargaProduk[val] !== undefined) document.getElementById('trxNominal').value = daftarHargaProduk[val];
-            if(daftarTotalAdminProduk[val] !== undefined) document.getElementById('trxTotalAdmin').value = daftarTotalAdminProduk[val];
+            if(daftarHargaProduk[val] !== undefined) {
+                document.getElementById('trxNominal').value = daftarHargaProduk[val];
+                // Jika total admin ada (digital), tampilkan. Jika tidak ada (fisik/non-digital), jadikan 0
+                document.getElementById('trxTotalAdmin').value = daftarTotalAdminProduk[val] !== undefined ? daftarTotalAdminProduk[val] : 0;
+            }
             hitungTotal();
         }
 
-        // PERBAIKAN: Menambahkan jeda waktu saat membuat nomor transaksi baru agar tidak ada overwrite.
         function eksekusiSimpanTransaksi() {
             let no = document.getElementById('trxNo').value;
             
-            // Fallback: Jika No TRX kosong karena suatu hal, paksa buat baru
             if(!no) {
                 setFormTrx();
                 no = document.getElementById('trxNo').value;
@@ -550,20 +553,31 @@
             db.ref('warung/transaksi/'+no).set(dataTrx).then(()=>{
                 cetakStruk(no, dataTrx.waktu, dataTrx.pelanggan, dataTrx.nama, dataTrx.qty, dataTrx.total_bayar);
                 document.getElementById('trxNama').value=''; document.getElementById('trxNominal').value=''; document.getElementById('trxQty').value='1'; document.getElementById('trxTotalAdmin').value=''; document.getElementById('trxDiskon').value=''; document.getElementById('trxTotal').value=''; 
-                
-                // Beri jeda 1 detik agar timestamp berubah, No TRX pasti unik
-                setTimeout(() => {
-                    setFormTrx();
-                }, 1000);
+                setTimeout(() => { setFormTrx(); }, 1000);
             });
         }
 
-        function editTransaksi(no, wkt, pel, med, nm, q, nom, tad, dsk, met, tot, stat) {
-            document.getElementById('trxNo').value = no; document.getElementById('trxTanggal').value = wkt; document.getElementById('trxPelanggan').value = pel;
-            document.getElementById('trxMedia').value = med; document.getElementById('trxNama').value = nm; document.getElementById('trxQty').value = q;
-            document.getElementById('trxNominal').value = nom; document.getElementById('trxTotalAdmin').value = tad; document.getElementById('trxDiskon').value = dsk;
-            document.getElementById('trxMetode').value = met; document.getElementById('trxTotal').value = tot; document.getElementById('trxStatus').value = stat;
-            bukaMenu('transaksi', document.querySelector('.sidebar button:nth-child(2)'));
+        // PERBAIKAN: Fungsi Edit Transaksi yang baru (Mengambil langsung dari global data)
+        function editTransaksi(no_trx) {
+            let t = dataTransaksiGlobal.find(x => x.no_trx === no_trx);
+            if(t) {
+                document.getElementById('trxNo').value = t.no_trx;
+                document.getElementById('trxTanggal').value = t.waktu;
+                document.getElementById('trxPelanggan').value = t.pelanggan || "Umum";
+                document.getElementById('trxMedia').value = t.media || "Warung";
+                document.getElementById('trxNama').value = t.nama || "";
+                document.getElementById('trxQty').value = t.qty || 1;
+                document.getElementById('trxNominal').value = t.nominal !== undefined ? t.nominal : 0;
+                document.getElementById('trxTotalAdmin').value = t.total_admin !== undefined ? t.total_admin : 0;
+                document.getElementById('trxDiskon').value = t.diskon !== undefined ? t.diskon : 0;
+                document.getElementById('trxMetode').value = t.metode || "Cash";
+                document.getElementById('trxTotal').value = t.total_bayar || 0;
+                document.getElementById('trxStatus').value = t.status || "Sukses";
+                
+                bukaMenu('transaksi', document.querySelector('.sidebar button:nth-child(2)'));
+            } else {
+                alert("Data transaksi tidak ditemukan.");
+            }
         }
 
         function hapusTransaksi(no) { if(confirm("Hapus transaksi?")) db.ref('warung/transaksi/'+no).remove(); }
@@ -612,7 +626,7 @@
                     <td>
                         <div class="btn-action-container">
                             <button class="btn-print" onclick="cetakStruk('${t.no_trx}','${t.waktu}','${t.pelanggan}','${t.nama}',${t.qty},${t.total_bayar})">Cetak</button>
-                            <button class="btn-edit" onclick="editTransaksi('${t.no_trx}','${t.waktu}','${t.pelanggan}','${t.media}','${t.nama}',${t.qty},${t.nominal||0},${t.total_admin||0},${t.diskon||0},'${t.metode}',${t.total_bayar},'${t.status}')">Edit</button>
+                            <button class="btn-edit" onclick="editTransaksi('${t.no_trx}')">Edit</button>
                             <button class="btn-del" onclick="hapusTransaksi('${t.no_trx}')">Hapus</button>
                         </div>
                     </td>
@@ -690,7 +704,6 @@
             eksekusiFilter(); document.getElementById('hasilFilterDiv').style.display = 'none';
         }
 
-        // PERBAIKAN: MappedData dengan handling data kosong/undefined agar proses ekspor ke Excel/PDF tidak gagal
         function getMappedData(modul, rawDataArray) {
             return rawDataArray.map(obj => {
                 if(modul === 'transaksi' || modul === 'filter') {
@@ -755,12 +768,37 @@
         function hitungAdminDig() { document.getElementById('plDigTotalAdmin').value = (parseInt(document.getElementById('plDigAdminApp').value)||0) + (parseInt(document.getElementById('plDigAdminBank').value)||0) + (parseInt(document.getElementById('plDigFee').value)||0); }
         function eksekusiSimpanPLDigital() { let k=document.getElementById('plDigKode').value, nm=document.getElementById('plDigNama').value; if(!k||!nm) return; db.ref('warung/pricelist/digital/'+k).set({ kode:k, nama:nm, jenis:document.getElementById('plDigJenis').value, nominal:document.getElementById('plDigNominal').value||0, adminApp:document.getElementById('plDigAdminApp').value||0, adminBank:document.getElementById('plDigAdminBank').value||0, fee:document.getElementById('plDigFee').value||0, total:document.getElementById('plDigTotalAdmin').value||0 }).then(()=>{alert("Disimpan");}); }
         function hapusPLDigital(k){ if(confirm("Hapus?")) db.ref('warung/pricelist/digital/'+k).remove(); }
-        db.ref('warung/pricelist/digital').on('value', snap => { let t=document.getElementById('tabelPLDigital'), dls=document.getElementById('listProdukKasir'); t.innerHTML=''; let list='<option value="Lain-lain">'; daftarTotalAdminProduk={}; snap.forEach(c=>{ let d=c.val(); t.innerHTML+=`<tr><td>${d.kode}</td><td>${d.nama}</td><td>${d.jenis}</td><td>Rp ${parseInt(d.nominal||0).toLocaleString()}</td><td>Rp ${d.adminApp||0}</td><td>Rp ${d.adminBank||0}</td><td>Rp ${d.fee||0}</td><td>Rp ${parseInt(d.total||0).toLocaleString()}</td><td><button class="btn-del" onclick="hapusPLDigital('${d.kode}')">Del</button></td></tr>`; list+=`<option value="${d.nama}">`; daftarHargaProduk[d.nama]=parseInt(d.nominal||0); daftarTotalAdminProduk[d.nama]=parseInt(d.total||0);}); dls.innerHTML=list; });
+        
+        // Listener Price List Digital
+        db.ref('warung/pricelist/digital').on('value', snap => { 
+            let t=document.getElementById('tabelPLDigital'), dls=document.getElementById('listProdukKasir'); t.innerHTML=''; let list='<option value="Lain-lain">'; daftarTotalAdminProduk={}; 
+            snap.forEach(c=>{ 
+                let d=c.val(); t.innerHTML+=`<tr><td>${d.kode}</td><td>${d.nama}</td><td>${d.jenis}</td><td>Rp ${parseInt(d.nominal||0).toLocaleString()}</td><td>Rp ${d.adminApp||0}</td><td>Rp ${d.adminBank||0}</td><td>Rp ${d.fee||0}</td><td>Rp ${parseInt(d.total||0).toLocaleString()}</td><td><button class="btn-del" onclick="hapusPLDigital('${d.kode}')">Del</button></td></tr>`; 
+                list+=`<option value="${d.nama}">`; 
+                daftarHargaProduk[d.nama]=parseInt(d.nominal||0); 
+                daftarTotalAdminProduk[d.nama]=parseInt(d.total||0);
+            }); 
+            dls.innerHTML=list; 
+        });
 
         function hitungLabaNonDigital() { document.getElementById('plNonLabaRp').value = Math.max(0, (parseFloat(document.getElementById('plNonJual').value)||0) - (parseFloat(document.getElementById('plNonBeli').value)||0)); }
         function eksekusiSimpanPLNonDigital() { let k=document.getElementById('plNonKode').value, nm=document.getElementById('plNonNama').value; if(!k||!nm) return; db.ref('warung/pricelist/nondigital/'+k).set({ kode:k, nama:nm, jenis:document.getElementById('plNonJenis').value, beli:document.getElementById('plNonBeli').value||0, jual:document.getElementById('plNonJual').value||0, laba:document.getElementById('plNonLabaRp').value||0, supplier:document.getElementById('plNonSupplier').value||'-' }).then(()=>{alert("Disimpan");}); }
         function hapusPLNonDigital(k){ if(confirm("Hapus?")) db.ref('warung/pricelist/nondigital/'+k).remove(); }
-        let masterProduk = {}; db.ref('warung/pricelist/nondigital').on('value', snap => { let t=document.getElementById('tabelPLNonDigital'), drop=document.getElementById('stokProduk'), dls=document.getElementById('listProdukKasir'); t.innerHTML=''; drop.innerHTML='<option value="">-- Pilih --</option>'; let list=dls.innerHTML; snap.forEach(c=>{ let d=c.val(); masterProduk[d.kode]=d.nama; t.innerHTML+=`<tr><td>${d.kode}</td><td>${d.nama}</td><td>${d.jenis}</td><td>Rp ${parseInt(d.beli||0).toLocaleString()}</td><td>Rp ${parseInt(d.jual||0).toLocaleString()}</td><td>Rp ${parseInt(d.laba||0).toLocaleString()}</td><td>${d.supplier||'-'}</td><td><button class="btn-del" onclick="hapusPLNonDigital('${d.kode}')">Del</button></td></tr>`; drop.innerHTML+=`<option value="${d.kode}">[${d.kode}] ${d.nama}</option>`; list+=`<option value="${d.nama}">`; daftarHargaProduk[d.nama]=parseInt(d.jual||0); }); dls.innerHTML=list; });
+        
+        let masterProduk = {}; 
+        
+        // Listener Price List Fisik / Non-Digital
+        db.ref('warung/pricelist/nondigital').on('value', snap => { 
+            let t=document.getElementById('tabelPLNonDigital'), drop=document.getElementById('stokProduk'), dls=document.getElementById('listProdukKasir'); t.innerHTML=''; drop.innerHTML='<option value="">-- Pilih --</option>'; let list=dls.innerHTML; 
+            snap.forEach(c=>{ 
+                let d=c.val(); masterProduk[d.kode]=d.nama; t.innerHTML+=`<tr><td>${d.kode}</td><td>${d.nama}</td><td>${d.jenis}</td><td>Rp ${parseInt(d.beli||0).toLocaleString()}</td><td>Rp ${parseInt(d.jual||0).toLocaleString()}</td><td>Rp ${parseInt(d.laba||0).toLocaleString()}</td><td>${d.supplier||'-'}</td><td><button class="btn-del" onclick="hapusPLNonDigital('${d.kode}')">Del</button></td></tr>`; 
+                drop.innerHTML+=`<option value="${d.kode}">[${d.kode}] ${d.nama}</option>`; 
+                list+=`<option value="${d.nama}">`; 
+                daftarHargaProduk[d.nama]=parseInt(d.jual||0); 
+                daftarTotalAdminProduk[d.nama]=0; // Beri nilai 0 agar Total Admin tidak terisi random saat kasir klik produk fisik
+            }); 
+            dls.innerHTML=list; 
+        });
 
         document.getElementById('stokWaktu').value = WaktuLokal();
         function eksekusiSimpanLogStok() { let k=document.getElementById('stokProduk').value, q=parseInt(document.getElementById('stokQty').value)||0, j=document.getElementById('stokJenis').value, i="LOG-"+new Date().getTime(); if(!k||q<=0)return; db.ref('warung/stok_log/'+i).set({ id:i, waktu:document.getElementById('stokWaktu').value, kode:k, nama:masterProduk[k], jenis:j, qty:q, ket:document.getElementById('stokKet').value||'-' }).then(()=>{ db.ref('warung/stok_total/'+k).once('value').then(sn=>{ let s=sn.exists()?sn.val().jumlah:0; db.ref('warung/stok_total/'+k).set({kode:k,nama:masterProduk[k],jumlah:j==="Masuk"?s+q:s-q}).then(()=>alert("Stok update"));}); }); }
