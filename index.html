@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ERP Warung Khatulistiwa - Mobile Optimized</title>
+    <title>ERP Warung Khatulistiwa - Final Optimized</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -89,10 +89,9 @@
 
         #area-struk { display: none; }
 
-        /* PERBAIKAN TAMPILAN MODUL 10 & RESPONSIVE HP */
         #pivotSummary {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 12px;
             margin-bottom: 15px;
             width: 100%;
@@ -643,6 +642,11 @@
 
             keranjangBelanja.forEach((item, index) => {
                 let uniqueId = no + (keranjangBelanja.length > 1 ? "-" + (index + 1) : "");
+                
+                // Laba dihitung dari Total Admin dikurangi Diskon (sesuai aturan baru)
+                let labaItem = (item.total_admin - item.diskon);
+                if (labaItem < 0) labaItem = 0;
+
                 let dataTrx = {
                     no_trx: uniqueId,
                     parent_trx: no,
@@ -656,7 +660,7 @@
                     diskon: item.diskon,
                     metode: metode,
                     total_bayar: item.subtotal,
-                    laba: (item.laba_satuan * item.qty) + item.total_admin,
+                    laba: labaItem,
                     status: status
                 };
                 db.ref('warung/transaksi/' + uniqueId).set(dataTrx);
@@ -783,24 +787,32 @@
             
             let pivotMetode = { "Cash": {qty:0, sum:0}, "QRIS": {qty:0, sum:0}, "Transfer": {qty:0, sum:0} };
             let pivotMedia = { "Warung": {qty:0, sum:0}, "Agen Mandiri": {qty:0, sum:0}, "Gopay": {qty:0, sum:0}, "Tokopedia": {qty:0, sum:0}, "Wondr": {qty:0, sum:0} };
-            let pivotPelanggan = {};
+            let pivotPelanggan = { "Umum": {qty:0, sum:0}, "Keluarga": {qty:0, sum:0}, "Pribadi": {qty:0, sum:0} };
             
             globalDataFilter.forEach(t => {
                 if(t.status === "Sukses") { 
                     trxT++; 
                     omsetT += t.total_bayar; 
-                    labaT += (t.laba || 0);
+                    
+                    // Laba dihitung dari total_admin dikurangi diskon
+                    let curLaba = (t.total_admin || 0) - (t.diskon || 0);
+                    if(curLaba < 0) curLaba = 0;
+                    labaT += curLaba;
+
                     let d = t.waktu.split('T')[0]; 
                     dataChart[d] = (dataChart[d]||0) + t.total_bayar; 
 
+                    // Rekap Metode
                     if(!pivotMetode[t.metode]) pivotMetode[t.metode] = {qty:0, sum:0};
                     pivotMetode[t.metode].qty += 1;
                     pivotMetode[t.metode].sum += t.total_bayar;
 
+                    // Rekap Media
                     if(!pivotMedia[t.media]) pivotMedia[t.media] = {qty:0, sum:0};
                     pivotMedia[t.media].qty += 1;
                     pivotMedia[t.media].sum += t.total_bayar;
 
+                    // Rekap Pelanggan
                     if(!pivotPelanggan[t.pelanggan]) pivotPelanggan[t.pelanggan] = {qty:0, sum:0};
                     pivotPelanggan[t.pelanggan].qty += 1;
                     pivotPelanggan[t.pelanggan].sum += t.total_bayar;
@@ -829,14 +841,25 @@
             document.getElementById('hasilFltOmset').innerText = 'Rp ' + omsetT.toLocaleString();
             document.getElementById('hasilFltLaba').innerText = 'Rp ' + labaT.toLocaleString();
 
+            // Format tabel pivot dengan kolom Kategori, Jumlah (Satuan), dan Jumlah (Rupiah)
             function buatHtmlPivot(judul, objData) {
                 let html = `<div class="report-box" style="margin-bottom:0; padding:10px;">
                     <h3 style="margin-top:0; color:#2c3e50; font-size:12px; border-bottom:1px dashed #ccc; padding-bottom:4px;">${judul}</h3>
                     <table style="width:100%; font-size:11px;">
-                        <thead><tr><th style="background:#34495e;">Kategori</th><th style="background:#34495e;">Jml</th><th style="background:#34495e;">Total Omset</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th style="background:#34495e;">Kategori</th>
+                                <th style="background:#34495e; text-align:center;">Jumlah (Satuan)</th>
+                                <th style="background:#34495e; text-align:right;">Jumlah (Rupiah)</th>
+                            </tr>
+                        </thead>
                         <tbody>`;
                 for(let key in objData) {
-                    html += `<tr><td><b>${key}</b></td><td>${objData[key].qty}x</td><td>Rp ${objData[key].sum.toLocaleString()}</td></tr>`;
+                    html += `<tr>
+                        <td><b>${key}</b></td>
+                        <td style="text-align:center;">${objData[key].qty}</td>
+                        <td style="text-align:right;">Rp ${objData[key].sum.toLocaleString()}</td>
+                    </tr>`;
                 }
                 html += `</tbody></table></div>`;
                 return html;
