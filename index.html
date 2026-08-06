@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ERP Warung Khatulistiwa - Full Version</title>
+    <title>ERP Warung Khatulistiwa - Uniform Sidebar</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -141,9 +141,9 @@
             <button class="menu-btn" onclick="bukaMenu('stok', this)">5. Stok</button>
             <button class="menu-btn" onclick="bukaMenu('keuangan', this)">6. Keuangan</button>
             <button class="menu-btn" onclick="bukaMenu('akuntansi', this)">7. Akuntansi</button>
-            <button class="menu-btn" onclick="bukaMenu('pribadi', this)" style="background-color: #d35400; color: white;">8. Pengeluaran Pribadi</button>
-            <button class="menu-btn" onclick="bukaMenu('legalitas', this)" style="background-color: #8e44ad; color: white;">9. Legalitas</button>
-            <button class="menu-btn" onclick="bukaMenu('filterdata', this)" style="background-color: #f39c12; color: white; margin-top: 5px;">10. Filter & Pivot</button>
+            <button class="menu-btn" onclick="bukaMenu('pribadi', this)">8. Pengeluaran Pribadi</button>
+            <button class="menu-btn" onclick="bukaMenu('legalitas', this)">9. Legalitas</button>
+            <button class="menu-btn" onclick="bukaMenu('filterdata', this)">10. Filter & Pivot</button>
             <div style="width: 100%; text-align: center;"><button class="btn-logout" onclick="prosesLogout()">Keluar</button></div>
         </div>
 
@@ -392,7 +392,7 @@
                         <div class="form-group" id="groupOtherPribadi" style="display:none;"><label>Nama Lainnya (Manual)</label><input type="text" id="pribadiOtherInput" placeholder="Ketik manual..."></div>
                         <div class="form-group"><label>Nominal (Rp)</label><input type="number" id="pribadiNominal" placeholder="0"></div>
                     </div>
-                    <button class="btn-submit" onclick="konfirmasiSimpan('pribadi')" style="background-color: #d35400;">Simpan Pengeluaran Pribadi</button>
+                    <button class="btn-submit" onclick="konfirmasiSimpan('pribadi')">Simpan Pengeluaran Pribadi</button>
                 </div>
 
                 <h2>📊 Pivot / Rekap Berdasarkan Jajan Siapa</h2>
@@ -400,9 +400,9 @@
                     <table style="width:100%;">
                         <thead>
                             <tr>
-                                <th style="background:#d35400;">Kategori (Jajan Siapa)</th>
-                                <th style="background:#d35400; text-align:center;">Jumlah Transaksi (Satuan)</th>
-                                <th style="background:#d35400; text-align:right;">Jumlah Transaksi (Rupiah)</th>
+                                <th>Kategori (Jajan Siapa)</th>
+                                <th style="text-align:center;">Jumlah Transaksi (Satuan)</th>
+                                <th style="text-align:right;">Jumlah Transaksi (Rupiah)</th>
                             </tr>
                         </thead>
                         <tbody id="tabelPivotPribadi">
@@ -884,7 +884,7 @@
                 tabelRiwayat.innerHTML += `<tr>
                     <td>${p.tanggal}</td>
                     <td>${p.nama}</td>
-                    <td><span class="badge" style="background-color: #d35400;">${p.jajan_siapa}</span></td>
+                    <td><span class="badge" style="background-color: #2c3e50;">${p.jajan_siapa}</span></td>
                     <td>Rp ${parseInt(p.nominal).toLocaleString()}</td>
                     <td><button class="btn-del" onclick="hapusPribadi('${p.id}')">Del</button></td>
                 </tr>`;
