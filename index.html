@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ERP Warung Khatulistiwa - Final Version</title>
+    <title>ERP Warung Khatulistiwa - Multi-Item Kasir & Pivot</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -125,14 +125,14 @@
         <div class="sidebar">
             <h2>⛺ Warung Khatulistiwa</h2>
             <button class="menu-btn active" onclick="bukaMenu('dashboard', this)">1. Dashboard</button>
-            <button class="menu-btn" onclick="bukaMenu('transaksi', this)">2. Kasir</button>
+            <button class="menu-btn" onclick="bukaMenu('transaksi', this)">2. Kasir (Multi-Item)</button>
             <button class="menu-btn" onclick="bukaMenu('operasi', this)">3. Operasi</button>
             <button class="menu-btn" onclick="bukaMenu('pricelist', this)">4. Price List</button>
             <button class="menu-btn" onclick="bukaMenu('stok', this)">5. Stok</button>
             <button class="menu-btn" onclick="bukaMenu('keuangan', this)">6. Keuangan</button>
             <button class="menu-btn" onclick="bukaMenu('akuntansi', this)">7. Akuntansi</button>
             <button class="menu-btn" onclick="bukaMenu('legalitas', this)" style="background-color: #8e44ad; color: white;">9. Legalitas</button>
-            <button class="menu-btn" onclick="bukaMenu('filterdata', this)" style="background-color: #f39c12; color: white; margin-top: 10px;">10. Filter Data</button>
+            <button class="menu-btn" onclick="bukaMenu('filterdata', this)" style="background-color: #f39c12; color: white; margin-top: 10px;">10. Filter & Pivot</button>
             <div style="width: 100%; text-align: center;"><button class="btn-logout" onclick="prosesLogout()">Keluar (Logout)</button></div>
         </div>
 
@@ -166,7 +166,7 @@
             </div>
 
             <div id="transaksi" class="page">
-                <h1>Form Kasir & History</h1>
+                <h1>Form Kasir (1 Pelanggan Banyak Transaksi)</h1>
                 <div class="form-grid">
                     <div class="form-group"><label>No TRX</label><input type="text" id="trxNo" readonly></div>
                     <div class="form-group"><label>Tanggal & Waktu</label><input type="datetime-local" id="trxTanggal"></div>
@@ -179,24 +179,52 @@
                         <input list="listProdukKasir" id="trxNama" placeholder="Cari atau ketik nama produk..." oninput="cekPilihanProdukKasir()">
                         <datalist id="listProdukKasir"></datalist>
                     </div>
-                    <div class="form-group"><label>Qty</label><input type="number" id="trxQty" value="1" oninput="hitungTotal()"></div>
-                    <div class="form-group"><label>Nominal (Rp)</label><input type="number" id="trxNominal" oninput="hitungTotal()"></div>
-                    <div class="form-group"><label>Total Admin (Rp)</label><input type="number" id="trxTotalAdmin" oninput="hitungTotal()"></div>
-                    <div class="form-group"><label>Diskon (Rp)</label><input type="number" id="trxDiskon" oninput="hitungTotal()"></div>
-                    <div class="form-group"><label>Metode</label><select id="trxMetode"><option>Cash</option><option>QRIS</option><option>Transfer</option></select></div>
-                    <div class="form-group"><label>Status</label><select id="trxStatus"><option>Sukses</option><option>Pending</option><option>Batal</option></select></div>
-                    <div class="form-group"><label>TOTAL BAYAR (Rp)</label><input type="number" id="trxTotal" readonly style="color: #c0392b; font-size: 16px;"></div>
+                    <div class="form-group"><label>Qty</label><input type="number" id="trxQty" value="1" oninput="hitungTotalItem()"></div>
+                    <div class="form-group"><label>Nominal Satuan (Rp)</label><input type="number" id="trxNominal" oninput="hitungTotalItem()"></div>
+                    <div class="form-group"><label>Total Admin (Rp)</label><input type="number" id="trxTotalAdmin" oninput="hitungTotalItem()"></div>
+                    <div class="form-group"><label>Diskon (Rp)</label><input type="number" id="trxDiskon" oninput="hitungTotalItem()"></div>
+                    <div class="form-group"><label>Subtotal Item (Rp)</label><input type="number" id="trxSubtotal" readonly style="font-weight:bold;"></div>
+                    <div class="form-group" style="justify-content: flex-end;"><button class="btn-sync" type="button" onclick="tambahItemKeKeranjang()" style="margin-top:auto;">➕ Tambah ke Keranjang</button></div>
                 </div>
-                <button class="btn-submit" onclick="konfirmasiSimpan('transaksi')">Simpan & Cetak Struk</button>
+
+                <h2>🛒 Daftar Item Keranjang Belanja Pelanggan Ini</h2>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Nama Produk/Transaksi</th>
+                                <th>Qty</th>
+                                <th>Nominal</th>
+                                <th>Admin</th>
+                                <th>Diskon</th>
+                                <th>Subtotal</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelKeranjang">
+                            <tr><td colspan="8" style="text-align:center;">Keranjang masih kosong. Silakan tambahkan item di atas.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="form-grid" style="margin-top: 20px; background: #ecf0f1; padding: 15px; border-radius: 6px;">
+                    <div class="form-group"><label>Metode Pembayaran</label><select id="trxMetode"><option>Cash</option><option>QRIS</option><option>Transfer</option></select></div>
+                    <div class="form-group"><label>Status Pembayaran</label><select id="trxStatus"><option>Sukses</option><option>Pending</option><option>Batal</option></select></div>
+                    <div class="form-group"><label>TOTAL KESELURUHAN (Rp)</label><input type="number" id="trxTotalSemua" readonly style="color: #c0392b; font-size: 18px; font-weight:bold;"></div>
+                </div>
+
+                <button class="btn-submit" onclick="konfirmasiSimpan('transaksi')" style="font-size: 16px; padding: 15px;">Simpan Semua Transaksi & Cetak Struk</button>
                 <div class="export-container"><button class="btn-excel" onclick="eksporData('transaksi', 'excel')">📊 Excel Kasir</button><button class="btn-pdf" onclick="eksporData('transaksi', 'pdf')">📄 PDF Kasir</button></div>
                 
+                <h2>📜 Riwayat Semua Transaksi</h2>
                 <div class="table-responsive">
                     <table>
                         <thead>
                             <tr>
                                 <th>No TRX</th>
                                 <th>Tanggal & Waktu</th>
-                                <th>Nama Transaksi</th>
+                                <th>Nama Transaksi / Item</th>
                                 <th>Pelanggan</th>
                                 <th>Media</th>
                                 <th>Metode</th>
@@ -219,7 +247,7 @@
                     Tgl: <span id="strukTgl"></span><br>
                     Pel: <span id="strukPel"></span><br>
                     ------------------------<br>
-                    <span id="strukNama"></span> (x<span id="strukQty"></span>)<br>
+                    <span id="strukItemContainer"></span>
                     ------------------------<br>
                     <b>TOTAL: Rp <span id="strukTotal"></span></b><br>
                     ------------------------<br>
@@ -350,9 +378,9 @@
             </div>
 
             <div id="filterdata" class="page">
-                <h1>Modul Analisis & Filter Data</h1>
+                <h1>Modul Analisis & Pivot Laporan</h1>
                 <div class="report-box">
-                    <h2>🔍 Saring Data Transaksi</h2>
+                    <h2>🔍 Saring Data Transaksi (Misal: 23 Juni 2026)</h2>
                     <div class="form-grid">
                         <div class="form-group"><label>Mulai Tanggal</label><input type="date" id="fltMulai"></div>
                         <div class="form-group"><label>Sampai Tanggal</label><input type="date" id="fltAkhir"></div>
@@ -368,10 +396,16 @@
                 </div>
 
                 <div id="hasilFilterDiv" style="display:none;">
+                    
                     <div class="dash-grid">
-                        <div class="dash-card" style="background-color:#16a085;"><h3>Total Transaksi (Terfilter)</h3><div class="nilai" id="hasilFltTrx">0</div></div>
-                        <div class="dash-card" style="background-color:#2980b9;"><h3>Total Omset (Terfilter)</h3><div class="nilai" id="hasilFltOmset">Rp 0</div></div>
+                        <div class="dash-card" style="background-color:#16a085;"><h3>Total Transaksi (Satuan)</h3><div class="nilai" id="hasilFltTrx">0</div></div>
+                        <div class="dash-card" style="background-color:#2980b9;"><h3>Total Omset (Rupiah)</h3><div class="nilai" id="hasilFltOmset">Rp 0</div></div>
+                        <div class="dash-card" style="background-color:#8e44ad;"><h3>Estimasi Laba (Rupiah)</h3><div class="nilai" id="hasilFltLaba">Rp 0</div></div>
                     </div>
+
+                    <div id="pivotSummary" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                        </div>
+
                     <div class="chart-container" style="margin-bottom:20px;">
                         <h2>📈 Grafik Omset Berdasarkan Filter</h2>
                         <canvas id="chartFilterCanvas"></canvas>
@@ -497,93 +531,166 @@
             myChartTahunan = new Chart(document.getElementById('chartTahunan').getContext('2d'), { type: 'bar', data: { labels: dataTahunan.labels, datasets: [{ label: 'Omset Tahunan (Rp)', data: dataTahunan.values, backgroundColor: '#e74c3c' }] } });
         }
 
-        // === TRANSAKSI ===
+        // === FITUR KERANJANG KASIR (MULTI-ITEM) ===
+        let keranjangBelanja = [];
+
         function setFormTrx() {
             const now = new Date();
             document.getElementById('trxNo').value = 'TRX-' + now.getFullYear() + String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0') + String(now.getHours()).padStart(2,'0') + String(now.getMinutes()).padStart(2,'0') + String(now.getSeconds()).padStart(2,'0');
             document.getElementById('trxTanggal').value = WaktuLokal();
+            keranjangBelanja = [];
+            renderTabelKeranjang();
         } setFormTrx();
 
-        function hitungTotal() {
+        function hitungTotalItem() {
             let qty = parseInt(document.getElementById('trxQty').value) || 1; 
             let n = parseInt(document.getElementById('trxNominal').value) || 0;
             let ta = parseInt(document.getElementById('trxTotalAdmin').value) || 0;
             let d = parseInt(document.getElementById('trxDiskon').value) || 0;
-            document.getElementById('trxTotal').value = ((n * qty) + ta - d) > 0 ? ((n * qty) + ta - d) : 0;
+            document.getElementById('trxSubtotal').value = ((n * qty) + ta - d) > 0 ? ((n * qty) + ta - d) : 0;
         }
 
-        let daftarHargaProduk = {}, daftarTotalAdminProduk = {};
-        
-        // PERBAIKAN: Fungsi integrasi Pilihan Produk & Total Admin dari Price List
+        let daftarHargaProduk = {}, daftarTotalAdminProduk = {}, daftarLabaProduk = {};
         function cekPilihanProdukKasir() {
             let val = document.getElementById('trxNama').value;
             if(daftarHargaProduk[val] !== undefined) {
                 document.getElementById('trxNominal').value = daftarHargaProduk[val];
-                // Jika total admin ada (digital), tampilkan. Jika tidak ada (fisik/non-digital), jadikan 0
                 document.getElementById('trxTotalAdmin').value = daftarTotalAdminProduk[val] !== undefined ? daftarTotalAdminProduk[val] : 0;
             }
-            hitungTotal();
+            hitungTotalItem();
         }
 
-        function eksekusiSimpanTransaksi() {
-            let no = document.getElementById('trxNo').value;
+        function tambahItemKeKeranjang() {
+            let nama = document.getElementById('trxNama').value.trim();
+            if(!nama) return alert("Nama produk/transaksi harus diisi!");
             
-            if(!no) {
-                setFormTrx();
-                no = document.getElementById('trxNo').value;
-            }
-
-            let namaVal = document.getElementById('trxNama').value.trim() || "Lain-lain";
-            
-            const dataTrx = {
-                no_trx: no, 
-                waktu: document.getElementById('trxTanggal').value, 
-                pelanggan: document.getElementById('trxPelanggan').value, 
-                media: document.getElementById('trxMedia').value,
-                nama: namaVal, 
+            let item = {
+                nama: nama,
                 qty: parseInt(document.getElementById('trxQty').value) || 1,
                 nominal: parseInt(document.getElementById('trxNominal').value) || 0,
                 total_admin: parseInt(document.getElementById('trxTotalAdmin').value) || 0,
                 diskon: parseInt(document.getElementById('trxDiskon').value) || 0,
-                metode: document.getElementById('trxMetode').value,
-                total_bayar: parseInt(document.getElementById('trxTotal').value) || 0, 
-                status: document.getElementById('trxStatus').value
+                subtotal: parseInt(document.getElementById('trxSubtotal').value) || 0,
+                laba_satuan: daftarLabaProduk[nama] || 0
             };
 
-            db.ref('warung/transaksi/'+no).set(dataTrx).then(()=>{
-                cetakStruk(no, dataTrx.waktu, dataTrx.pelanggan, dataTrx.nama, dataTrx.qty, dataTrx.total_bayar);
-                document.getElementById('trxNama').value=''; document.getElementById('trxNominal').value=''; document.getElementById('trxQty').value='1'; document.getElementById('trxTotalAdmin').value=''; document.getElementById('trxDiskon').value=''; document.getElementById('trxTotal').value=''; 
-                setTimeout(() => { setFormTrx(); }, 1000);
-            });
+            keranjangBelanja.push(item);
+            renderTabelKeranjang();
+
+            // Reset input item saja
+            document.getElementById('trxNama').value = '';
+            document.getElementById('trxNominal').value = '';
+            document.getElementById('trxQty').value = '1';
+            document.getElementById('trxTotalAdmin').value = '';
+            document.getElementById('trxDiskon').value = '';
+            document.getElementById('trxSubtotal').value = '';
         }
 
-        // PERBAIKAN: Fungsi Edit Transaksi yang baru (Mengambil langsung dari global data)
+        function hapusItemKeranjang(index) {
+            keranjangBelanja.splice(index, 1);
+            renderTabelKeranjang();
+        }
+
+        function renderTabelKeranjang() {
+            let tbody = document.getElementById('tabelKeranjang');
+            tbody.innerHTML = '';
+            let totalSemua = 0;
+
+            if(keranjangBelanja.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;">Keranjang masih kosong. Silakan tambahkan item di atas.</td></tr>`;
+                document.getElementById('trxTotalSemua').value = 0;
+                return;
+            }
+
+            keranjangBelanja.forEach((it, idx) => {
+                totalSemua += it.subtotal;
+                tbody.innerHTML += `<tr>
+                    <td>${idx + 1}</td>
+                    <td>${it.nama}</td>
+                    <td>${it.qty}</td>
+                    <td>Rp ${it.nominal.toLocaleString()}</td>
+                    <td>Rp ${it.total_admin.toLocaleString()}</td>
+                    <td>Rp ${it.diskon.toLocaleString()}</td>
+                    <td style="font-weight:bold;">Rp ${it.subtotal.toLocaleString()}</td>
+                    <td><button class="btn-del" onclick="hapusItemKeranjang(${idx})">Hapus</button></td>
+                </tr>`;
+            });
+
+            document.getElementById('trxTotalSemua').value = totalSemua;
+        }
+
+        // Menyimpan semua item dalam keranjang sebagai 1 No TRX / dipecah menjadi record database yang terhubung
+        function eksekusiSimpanTransaksi() {
+            if(keranjangBelanja.length === 0) return alert("Keranjang belanja masih kosong!");
+            
+            let no = document.getElementById('trxNo').value;
+            if(!no) { setFormTrx(); no = document.getElementById('trxNo').value; }
+            
+            let waktu = document.getElementById('trxTanggal').value;
+            let pelanggan = document.getElementById('trxPelanggan').value;
+            let media = document.getElementById('trxMedia').value;
+            let metode = document.getElementById('trxMetode').value;
+            let status = document.getElementById('trxStatus').value;
+
+            // Simpan setiap item di keranjang ke database
+            keranjangBelanja.forEach((item, index) => {
+                let uniqueId = no + (keranjangBelanja.length > 1 ? "-" + (index + 1) : "");
+                let dataTrx = {
+                    no_trx: uniqueId,
+                    parent_trx: no,
+                    waktu: waktu,
+                    pelanggan: pelanggan,
+                    media: media,
+                    nama: item.nama,
+                    qty: item.qty,
+                    nominal: item.nominal,
+                    total_admin: item.total_admin,
+                    diskon: item.diskon,
+                    metode: metode,
+                    total_bayar: item.subtotal,
+                    laba: (item.laba_satuan * item.qty) + item.total_admin, // Estimasi laba
+                    status: status
+                };
+                db.ref('warung/transaksi/' + uniqueId).set(dataTrx);
+            });
+
+            // Cetak Struk
+            cetakStrukMulti(no, waktu, pelanggan, keranjangBelanja, document.getElementById('trxTotalSemua').value);
+            setTimeout(() => { setFormTrx(); }, 1000);
+        }
+
         function editTransaksi(no_trx) {
             let t = dataTransaksiGlobal.find(x => x.no_trx === no_trx);
             if(t) {
-                document.getElementById('trxNo').value = t.no_trx;
+                document.getElementById('trxNo').value = t.parent_trx || t.no_trx;
                 document.getElementById('trxTanggal').value = t.waktu;
                 document.getElementById('trxPelanggan').value = t.pelanggan || "Umum";
                 document.getElementById('trxMedia').value = t.media || "Warung";
-                document.getElementById('trxNama').value = t.nama || "";
-                document.getElementById('trxQty').value = t.qty || 1;
-                document.getElementById('trxNominal').value = t.nominal !== undefined ? t.nominal : 0;
-                document.getElementById('trxTotalAdmin').value = t.total_admin !== undefined ? t.total_admin : 0;
-                document.getElementById('trxDiskon').value = t.diskon !== undefined ? t.diskon : 0;
                 document.getElementById('trxMetode').value = t.metode || "Cash";
-                document.getElementById('trxTotal').value = t.total_bayar || 0;
                 document.getElementById('trxStatus').value = t.status || "Sukses";
                 
+                // Masukkan ke keranjang satuan untuk diedit
+                keranjangBelanja = [{
+                    nama: t.nama, qty: t.qty, nominal: t.nominal, total_admin: t.total_admin, diskon: t.diskon, subtotal: t.total_bayar, laba_satuan: 0
+                }];
+                renderTabelKeranjang();
                 bukaMenu('transaksi', document.querySelector('.sidebar button:nth-child(2)'));
-            } else {
-                alert("Data transaksi tidak ditemukan.");
-            }
+            } else { alert("Data transaksi tidak ditemukan."); }
         }
 
-        function hapusTransaksi(no) { if(confirm("Hapus transaksi?")) db.ref('warung/transaksi/'+no).remove(); }
-        function cetakStruk(no, wkt, pel, nama, qty, total) {
-            document.getElementById('strukNo').innerText = no; document.getElementById('strukTgl').innerText = wkt.replace('T', ' '); document.getElementById('strukPel').innerText = pel;
-            document.getElementById('strukNama').innerText = nama; document.getElementById('strukQty').innerText = qty; document.getElementById('strukTotal').innerText = parseInt(total).toLocaleString();
+        function hapusTransaksi(no) { if(confirm("Hapus transaksi ini?")) db.ref('warung/transaksi/'+no).remove(); }
+        
+        function cetakStrukMulti(no, wkt, pel, items, total) {
+            document.getElementById('strukNo').innerText = no; 
+            document.getElementById('strukTgl').innerText = wkt.replace('T', ' '); 
+            document.getElementById('strukPel').innerText = pel;
+            
+            let itemHtml = "";
+            items.forEach(it => {
+                itemHtml += `${it.nama} (x${it.qty}) - Rp ${it.subtotal.toLocaleString()}<br>`;
+            });
+            document.getElementById('strukItemContainer').innerHTML = itemHtml;
+            document.getElementById('strukTotal').innerText = parseInt(total).toLocaleString();
             setTimeout(() => { window.print(); }, 300);
         }
 
@@ -625,7 +732,6 @@
                     <td><span class="badge ${bg}">${t.status}</span></td>
                     <td>
                         <div class="btn-action-container">
-                            <button class="btn-print" onclick="cetakStruk('${t.no_trx}','${t.waktu}','${t.pelanggan}','${t.nama}',${t.qty},${t.total_bayar})">Cetak</button>
                             <button class="btn-edit" onclick="editTransaksi('${t.no_trx}')">Edit</button>
                             <button class="btn-del" onclick="hapusTransaksi('${t.no_trx}')">Hapus</button>
                         </div>
@@ -640,7 +746,7 @@
             eksekusiFilter(); hitungLabaRugi(); renderAkuntansi();
         });
 
-        // === MODUL 10: FILTER DATA ===
+        // === MODUL 10: FILTER & PIVOT LAPORAN MENDALAM ===
         let globalDataFilter = []; 
         
         function eksekusiFilter() {
@@ -664,14 +770,40 @@
             });
 
             globalDataFilter = [...filtered].reverse();
-
             document.getElementById('hasilFilterDiv').style.display = 'block';
             let tFilter = document.getElementById('tabelHasilFilter'); tFilter.innerHTML = '';
             
-            let omsetT = 0, trxT = 0, dataChart = {};
+            let omsetT = 0, trxT = 0, labaT = 0, dataChart = {};
+            
+            // Variabel Pivot Lengkap (Satuan & Rupiah)
+            let pivotMetode = { "Cash": {qty:0, sum:0}, "QRIS": {qty:0, sum:0}, "Transfer": {qty:0, sum:0} };
+            let pivotMedia = { "Warung": {qty:0, sum:0}, "Agen Mandiri": {qty:0, sum:0}, "Gopay": {qty:0, sum:0}, "Tokopedia": {qty:0, sum:0}, "Wondr": {qty:0, sum:0} };
+            let pivotPelanggan = {};
             
             globalDataFilter.forEach(t => {
-                if(t.status === "Sukses") { trxT++; omsetT+=t.total_bayar; let d=t.waktu.split('T')[0]; dataChart[d]=(dataChart[d]||0)+t.total_bayar; }
+                if(t.status === "Sukses") { 
+                    trxT++; 
+                    omsetT += t.total_bayar; 
+                    labaT += (t.laba || 0);
+                    let d = t.waktu.split('T')[0]; 
+                    dataChart[d] = (dataChart[d]||0) + t.total_bayar; 
+
+                    // Rekap Metode Bayar
+                    if(!pivotMetode[t.metode]) pivotMetode[t.metode] = {qty:0, sum:0};
+                    pivotMetode[t.metode].qty += 1;
+                    pivotMetode[t.metode].sum += t.total_bayar;
+
+                    // Rekap Media
+                    if(!pivotMedia[t.media]) pivotMedia[t.media] = {qty:0, sum:0};
+                    pivotMedia[t.media].qty += 1;
+                    pivotMedia[t.media].sum += t.total_bayar;
+
+                    // Rekap Pelanggan
+                    if(!pivotPelanggan[t.pelanggan]) pivotPelanggan[t.pelanggan] = {qty:0, sum:0};
+                    pivotPelanggan[t.pelanggan].qty += 1;
+                    pivotPelanggan[t.pelanggan].sum += t.total_bayar;
+                }
+                
                 let bg = t.status==="Sukses" ? "bg-success" : (t.status==="Pending" ? "bg-pending" : "bg-danger");
                 tFilter.innerHTML += `<tr>
                     <td>${t.no_trx}</td>
@@ -691,8 +823,28 @@
             
             if(globalDataFilter.length === 0) tFilter.innerHTML = `<tr><td colspan="12" style="text-align:center;">Tidak ada data yang cocok dengan filter</td></tr>`;
 
-            document.getElementById('hasilFltTrx').innerText = trxT;
+            document.getElementById('hasilFltTrx').innerText = trxT + " Transaksi";
             document.getElementById('hasilFltOmset').innerText = 'Rp ' + omsetT.toLocaleString();
+            document.getElementById('hasilFltLaba').innerText = 'Rp ' + labaT.toLocaleString();
+
+            // Render Tampilan HTML Pivot Mendalam
+            function buatHtmlPivot(judul, objData) {
+                let html = `<div class="report-box" style="margin-bottom:0; padding:12px;">
+                    <h3 style="margin-top:0; color:#2c3e50; font-size:13px; border-bottom:1px dashed #ccc; padding-bottom:6px;">${judul}</h3>
+                    <table style="width:100%; font-size:11px;">
+                        <thead><tr><th style="background:#34495e;">Kategori</th><th style="background:#34495e;">Jml (Satuan)</th><th style="background:#34495e;">Total Omset (Rp)</th></tr></thead>
+                        <tbody>`;
+                for(let key in objData) {
+                    html += `<tr><td><b>${key}</b></td><td>${objData[key].qty} transaksi</td><td>Rp ${objData[key].sum.toLocaleString()}</td></tr>`;
+                }
+                html += `</tbody></table></div>`;
+                return html;
+            }
+
+            document.getElementById('pivotSummary').innerHTML = 
+                buatHtmlPivot('💳 Pivot Berdasarkan Metode Pembayaran', pivotMetode) +
+                buatHtmlPivot('🌐 Pivot Berdasarkan Media Transaksi', pivotMedia) +
+                buatHtmlPivot('👥 Pivot Berdasarkan Pelanggan', pivotPelanggan);
 
             let lbls = Object.keys(dataChart).sort(), vals = lbls.map(k=>dataChart[k]);
             if(chartFilterObj) chartFilterObj.destroy();
@@ -708,18 +860,11 @@
             return rawDataArray.map(obj => {
                 if(modul === 'transaksi' || modul === 'filter') {
                     return { 
-                        "No Trx": obj.no_trx || "-", 
-                        "Tanggal & Waktu": (obj.waktu || "").replace('T',' '), 
-                        "Nama Transaksi": obj.nama || "-",
-                        "Pelanggan": obj.pelanggan || "-", 
-                        "Media": obj.media || "-", 
-                        "Metode": obj.metode || "-", 
-                        "Qty": obj.qty || 1, 
-                        "Nominal (Rp)": obj.nominal || 0, 
-                        "Total Admin (Rp)": obj.total_admin || 0,
-                        "Diskon (Rp)": obj.diskon || 0,
-                        "Total Bayar (Rp)": obj.total_bayar || 0, 
-                        "Status": obj.status || "-" 
+                        "No Trx": obj.no_trx || "-", "Tanggal & Waktu": (obj.waktu || "").replace('T',' '), 
+                        "Nama Transaksi": obj.nama || "-", "Pelanggan": obj.pelanggan || "-", 
+                        "Media": obj.media || "-", "Metode": obj.metode || "-", "Qty": obj.qty || 1, 
+                        "Nominal (Rp)": obj.nominal || 0, "Total Admin (Rp)": obj.total_admin || 0,
+                        "Diskon (Rp)": obj.diskon || 0, "Total Bayar (Rp)": obj.total_bayar || 0, "Status": obj.status || "-" 
                     };
                 }
                 if(modul === 'operasi') return { "Tanggal": obj.tgl, "Hari": obj.hari, "Status": obj.status, "Buka": obj.buka, "Tutup": obj.tutup, "Jml Pelanggan": obj.pel };
@@ -751,10 +896,8 @@
                 XLSX.utils.book_append_sheet(wb, ws, "Rekap"); XLSX.writeFile(wb, `Rekap-${namaFile}.xlsx`);
             } else if (format === 'pdf') {
                 const { jsPDF } = window.jspdf; let doc = new jsPDF('landscape');
-                let headers = Object.keys(dataArray[0]);
-                let rows = dataArray.map(obj => Object.values(obj));
-                doc.autoTable({ startY: 20, head: [headers], body: rows, theme: 'grid', styles: { fontSize: 7 } });
-                doc.save(`Laporan-${namaFile}.pdf`);
+                let headers = Object.keys(dataArray[0]); let rows = dataArray.map(obj => Object.values(obj));
+                doc.autoTable({ startY: 20, head: [headers], body: rows, theme: 'grid', styles: { fontSize: 7 } }); doc.save(`Laporan-${namaFile}.pdf`);
             }
         }
 
@@ -768,36 +911,23 @@
         function hitungAdminDig() { document.getElementById('plDigTotalAdmin').value = (parseInt(document.getElementById('plDigAdminApp').value)||0) + (parseInt(document.getElementById('plDigAdminBank').value)||0) + (parseInt(document.getElementById('plDigFee').value)||0); }
         function eksekusiSimpanPLDigital() { let k=document.getElementById('plDigKode').value, nm=document.getElementById('plDigNama').value; if(!k||!nm) return; db.ref('warung/pricelist/digital/'+k).set({ kode:k, nama:nm, jenis:document.getElementById('plDigJenis').value, nominal:document.getElementById('plDigNominal').value||0, adminApp:document.getElementById('plDigAdminApp').value||0, adminBank:document.getElementById('plDigAdminBank').value||0, fee:document.getElementById('plDigFee').value||0, total:document.getElementById('plDigTotalAdmin').value||0 }).then(()=>{alert("Disimpan");}); }
         function hapusPLDigital(k){ if(confirm("Hapus?")) db.ref('warung/pricelist/digital/'+k).remove(); }
-        
-        // Listener Price List Digital
         db.ref('warung/pricelist/digital').on('value', snap => { 
             let t=document.getElementById('tabelPLDigital'), dls=document.getElementById('listProdukKasir'); t.innerHTML=''; let list='<option value="Lain-lain">'; daftarTotalAdminProduk={}; 
             snap.forEach(c=>{ 
                 let d=c.val(); t.innerHTML+=`<tr><td>${d.kode}</td><td>${d.nama}</td><td>${d.jenis}</td><td>Rp ${parseInt(d.nominal||0).toLocaleString()}</td><td>Rp ${d.adminApp||0}</td><td>Rp ${d.adminBank||0}</td><td>Rp ${d.fee||0}</td><td>Rp ${parseInt(d.total||0).toLocaleString()}</td><td><button class="btn-del" onclick="hapusPLDigital('${d.kode}')">Del</button></td></tr>`; 
-                list+=`<option value="${d.nama}">`; 
-                daftarHargaProduk[d.nama]=parseInt(d.nominal||0); 
-                daftarTotalAdminProduk[d.nama]=parseInt(d.total||0);
-            }); 
-            dls.innerHTML=list; 
+                list+=`<option value="${d.nama}">`; daftarHargaProduk[d.nama]=parseInt(d.nominal||0); daftarTotalAdminProduk[d.nama]=parseInt(d.total||0); daftarLabaProduk[d.nama]=parseInt(d.fee||0);
+            }); dls.innerHTML=list; 
         });
 
         function hitungLabaNonDigital() { document.getElementById('plNonLabaRp').value = Math.max(0, (parseFloat(document.getElementById('plNonJual').value)||0) - (parseFloat(document.getElementById('plNonBeli').value)||0)); }
         function eksekusiSimpanPLNonDigital() { let k=document.getElementById('plNonKode').value, nm=document.getElementById('plNonNama').value; if(!k||!nm) return; db.ref('warung/pricelist/nondigital/'+k).set({ kode:k, nama:nm, jenis:document.getElementById('plNonJenis').value, beli:document.getElementById('plNonBeli').value||0, jual:document.getElementById('plNonJual').value||0, laba:document.getElementById('plNonLabaRp').value||0, supplier:document.getElementById('plNonSupplier').value||'-' }).then(()=>{alert("Disimpan");}); }
         function hapusPLNonDigital(k){ if(confirm("Hapus?")) db.ref('warung/pricelist/nondigital/'+k).remove(); }
-        
-        let masterProduk = {}; 
-        
-        // Listener Price List Fisik / Non-Digital
-        db.ref('warung/pricelist/nondigital').on('value', snap => { 
+        let masterProduk = {}; db.ref('warung/pricelist/nondigital').on('value', snap => { 
             let t=document.getElementById('tabelPLNonDigital'), drop=document.getElementById('stokProduk'), dls=document.getElementById('listProdukKasir'); t.innerHTML=''; drop.innerHTML='<option value="">-- Pilih --</option>'; let list=dls.innerHTML; 
             snap.forEach(c=>{ 
                 let d=c.val(); masterProduk[d.kode]=d.nama; t.innerHTML+=`<tr><td>${d.kode}</td><td>${d.nama}</td><td>${d.jenis}</td><td>Rp ${parseInt(d.beli||0).toLocaleString()}</td><td>Rp ${parseInt(d.jual||0).toLocaleString()}</td><td>Rp ${parseInt(d.laba||0).toLocaleString()}</td><td>${d.supplier||'-'}</td><td><button class="btn-del" onclick="hapusPLNonDigital('${d.kode}')">Del</button></td></tr>`; 
-                drop.innerHTML+=`<option value="${d.kode}">[${d.kode}] ${d.nama}</option>`; 
-                list+=`<option value="${d.nama}">`; 
-                daftarHargaProduk[d.nama]=parseInt(d.jual||0); 
-                daftarTotalAdminProduk[d.nama]=0; // Beri nilai 0 agar Total Admin tidak terisi random saat kasir klik produk fisik
-            }); 
-            dls.innerHTML=list; 
+                drop.innerHTML+=`<option value="${d.kode}">[${d.kode}] ${d.nama}</option>`; list+=`<option value="${d.nama}">`; daftarHargaProduk[d.nama]=parseInt(d.jual||0); daftarTotalAdminProduk[d.nama]=0; daftarLabaProduk[d.nama]=parseInt(d.laba||0);
+            }); dls.innerHTML=list; 
         });
 
         document.getElementById('stokWaktu').value = WaktuLokal();
