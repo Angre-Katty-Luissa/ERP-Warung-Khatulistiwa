@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ERP Warung Khatulistiwa - Fix Version</title>
+    <title>ERP Warung Khatulistiwa - Final Version</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -101,7 +101,7 @@
         }
 
         @media print {
-            #login-container, .sidebar, h1, h2, .form-grid, .btn-submit, .btn-sync, .btn-danger, .export-container, .table-responsive, .dash-grid, .chart-container, .alert-box, .tab-container, .report-box, #status-db { display: none !important; }
+            #login-container, .sidebar, h1, h2, .form-grid, .btn-submit, .btn-sync, .btn-danger, .export-container, .table-responsive, .dash-grid, .chart-container, .alert-box, .tab-container, .report-box, #status-db, #filterdata { display: none !important; }
             body, .main-content, #app-container, .page { margin: 0 !important; padding: 0 !important; background: white !important; width: 100% !important; box-shadow: none !important; }
             @page { size: 58mm auto; margin: 0; }
             #area-struk { display: block !important; width: 58mm; margin: 0 auto; padding: 0; font-family: 'Courier New', Courier, monospace; font-size: 12px; color: black; }
@@ -520,8 +520,16 @@
             hitungTotal();
         }
 
+        // PERBAIKAN: Menambahkan jeda waktu saat membuat nomor transaksi baru agar tidak ada overwrite.
         function eksekusiSimpanTransaksi() {
             let no = document.getElementById('trxNo').value;
+            
+            // Fallback: Jika No TRX kosong karena suatu hal, paksa buat baru
+            if(!no) {
+                setFormTrx();
+                no = document.getElementById('trxNo').value;
+            }
+
             let namaVal = document.getElementById('trxNama').value.trim() || "Lain-lain";
             
             const dataTrx = {
@@ -542,7 +550,11 @@
             db.ref('warung/transaksi/'+no).set(dataTrx).then(()=>{
                 cetakStruk(no, dataTrx.waktu, dataTrx.pelanggan, dataTrx.nama, dataTrx.qty, dataTrx.total_bayar);
                 document.getElementById('trxNama').value=''; document.getElementById('trxNominal').value=''; document.getElementById('trxQty').value='1'; document.getElementById('trxTotalAdmin').value=''; document.getElementById('trxDiskon').value=''; document.getElementById('trxTotal').value=''; 
-                setFormTrx();
+                
+                // Beri jeda 1 detik agar timestamp berubah, No TRX pasti unik
+                setTimeout(() => {
+                    setFormTrx();
+                }, 1000);
             });
         }
 
@@ -582,7 +594,6 @@
                 if(t.waktu.startsWith(tglHariIni) && t.status==="Sukses") { trxHariIniG++; omsetHariIniG += t.total_bayar; }
             });
 
-            // MENGISI TABEL KASIR (MODUL 2) DENGAN SEMUA KOLOM SECARA BERURUTAN
             [...dataTransaksiGlobal].reverse().forEach(t => {
                 let bg = t.status==="Sukses" ? "bg-success" : (t.status==="Pending" ? "bg-pending" : "bg-danger");
                 tTrx.innerHTML += `<tr>
@@ -645,7 +656,6 @@
             
             let omsetT = 0, trxT = 0, dataChart = {};
             
-            // MENGISI TABEL HASIL FILTER (MODUL 10) DENGAN SEMUA KOLOM SECARA BERURUTAN
             globalDataFilter.forEach(t => {
                 if(t.status === "Sukses") { trxT++; omsetT+=t.total_bayar; let d=t.waktu.split('T')[0]; dataChart[d]=(dataChart[d]||0)+t.total_bayar; }
                 let bg = t.status==="Sukses" ? "bg-success" : (t.status==="Pending" ? "bg-pending" : "bg-danger");
@@ -680,28 +690,30 @@
             eksekusiFilter(); document.getElementById('hasilFilterDiv').style.display = 'none';
         }
 
-        // === FUNGSI EKSPOR EXCEL & PDF DENGAN URUTAN KOLOM YANG BARU ===
+        // PERBAIKAN: MappedData dengan handling data kosong/undefined agar proses ekspor ke Excel/PDF tidak gagal
         function getMappedData(modul, rawDataArray) {
             return rawDataArray.map(obj => {
-                if(modul === 'transaksi' || modul === 'filter') return { 
-                    "No Trx": obj.no_trx, 
-                    "Tanggal & Waktu": obj.waktu.replace('T',' '), 
-                    "Nama Transaksi": obj.nama,
-                    "Pelanggan": obj.pelanggan, 
-                    "Media": obj.media, 
-                    "Metode": obj.metode, 
-                    "Qty": obj.qty, 
-                    "Nominal": obj.nominal, 
-                    "Total Admin": obj.total_admin,
-                    "Diskon": obj.diskon,
-                    "Total Bayar": obj.total_bayar, 
-                    "Status": obj.status 
-                };
+                if(modul === 'transaksi' || modul === 'filter') {
+                    return { 
+                        "No Trx": obj.no_trx || "-", 
+                        "Tanggal & Waktu": (obj.waktu || "").replace('T',' '), 
+                        "Nama Transaksi": obj.nama || "-",
+                        "Pelanggan": obj.pelanggan || "-", 
+                        "Media": obj.media || "-", 
+                        "Metode": obj.metode || "-", 
+                        "Qty": obj.qty || 1, 
+                        "Nominal (Rp)": obj.nominal || 0, 
+                        "Total Admin (Rp)": obj.total_admin || 0,
+                        "Diskon (Rp)": obj.diskon || 0,
+                        "Total Bayar (Rp)": obj.total_bayar || 0, 
+                        "Status": obj.status || "-" 
+                    };
+                }
                 if(modul === 'operasi') return { "Tanggal": obj.tgl, "Hari": obj.hari, "Status": obj.status, "Buka": obj.buka, "Tutup": obj.tutup, "Jml Pelanggan": obj.pel };
                 if(modul === 'pl_digital') return { "Kode": obj.kode, "Nama Produk": obj.nama, "Jenis": obj.jenis, "Nominal (Rp)": obj.nominal, "Admin App": obj.adminApp, "Admin Bank": obj.adminBank, "Fee Warung": obj.fee, "Total Admin": obj.total };
                 if(modul === 'pl_nondigital') return { "Kode": obj.kode, "Nama Produk": obj.nama, "Jenis": obj.jenis, "Beli (Rp)": obj.beli, "Jual (Rp)": obj.jual, "Laba (Rp)": obj.laba, "Supplier": obj.supplier };
-                if(modul === 'stok') return { "Waktu": obj.waktu.replace('T',' '), "Kode": obj.kode, "Nama Produk": obj.nama, "Jenis Arus": obj.jenis, "Qty": obj.qty, "Keterangan": obj.ket };
-                if(modul === 'pengeluaran') return { "Waktu": obj.waktu.replace('T',' '), "Kategori": obj.kat, "Nominal (Rp)": obj.nom, "Keterangan": obj.ket };
+                if(modul === 'stok') return { "Waktu": (obj.waktu || "").replace('T',' '), "Kode": obj.kode, "Nama Produk": obj.nama, "Jenis Arus": obj.jenis, "Qty": obj.qty, "Keterangan": obj.ket };
+                if(modul === 'pengeluaran') return { "Waktu": (obj.waktu || "").replace('T',' '), "Kategori": obj.kat, "Nominal (Rp)": obj.nom, "Keterangan": obj.ket };
                 return obj;
             });
         }
