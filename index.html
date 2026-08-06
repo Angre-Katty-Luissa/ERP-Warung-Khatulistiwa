@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ERP Warung Khatulistiwa - Final Optimized</title>
+    <title>ERP Warung Khatulistiwa - with Pengeluaran Pribadi</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -46,7 +46,6 @@
         .btn-danger { background-color: #e74c3c; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 8px;}
         
         .btn-action-container { display: flex; gap: 4px; }
-        .btn-print { background-color: #8e44ad; color: white; border: none; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; font-weight: bold;}
         .btn-edit { background-color: #f39c12; color: white; border: none; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; font-weight: bold;}
         .btn-del { background-color: #e74c3c; color: white; border: none; padding: 3px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; font-weight: bold;}
         
@@ -142,6 +141,7 @@
             <button class="menu-btn" onclick="bukaMenu('stok', this)">5. Stok</button>
             <button class="menu-btn" onclick="bukaMenu('keuangan', this)">6. Keuangan</button>
             <button class="menu-btn" onclick="bukaMenu('akuntansi', this)">7. Akuntansi</button>
+            <button class="menu-btn" onclick="bukaMenu('pribadi', this)" style="background-color: #d35400; color: white;">8. Pengeluaran Pribadi</button>
             <button class="menu-btn" onclick="bukaMenu('legalitas', this)" style="background-color: #8e44ad; color: white;">9. Legalitas</button>
             <button class="menu-btn" onclick="bukaMenu('filterdata', this)" style="background-color: #f39c12; color: white; margin-top: 5px;">10. Filter & Pivot</button>
             <div style="width: 100%; text-align: center;"><button class="btn-logout" onclick="prosesLogout()">Keluar</button></div>
@@ -373,6 +373,61 @@
                 </div>
             </div>
 
+            <div id="pribadi" class="page">
+                <h1>Modul Pengeluaran Pribadi</h1>
+                <div class="report-box">
+                    <h2>Catat Pengeluaran Pribadi</h2>
+                    <div class="form-grid">
+                        <div class="form-group"><label>Tanggal</label><input type="date" id="pribadiTanggal"></div>
+                        <div class="form-group"><label>Nama Pengeluaran</label><input type="text" id="pribadiNama" placeholder="Contoh: Beli Snack / Makan Siang"></div>
+                        <div class="form-group"><label>Jajan Siapa</label>
+                            <select id="pribadiPilihan" onchange="cekPilihanPribadi()">
+                                <option value="Lisa">Lisa</option>
+                                <option value="Monik">Monik</option>
+                                <option value="Mama">Mama</option>
+                                <option value="Papa">Papa</option>
+                                <option value="Other">Other (Lainnya)</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="groupOtherPribadi" style="display:none;"><label>Nama Lainnya (Manual)</label><input type="text" id="pribadiOtherInput" placeholder="Ketik manual..."></div>
+                        <div class="form-group"><label>Nominal (Rp)</label><input type="number" id="pribadiNominal" placeholder="0"></div>
+                    </div>
+                    <button class="btn-submit" onclick="konfirmasiSimpan('pribadi')" style="background-color: #d35400;">Simpan Pengeluaran Pribadi</button>
+                </div>
+
+                <h2>📊 Pivot / Rekap Berdasarkan Jajan Siapa</h2>
+                <div class="table-responsive">
+                    <table style="width:100%;">
+                        <thead>
+                            <tr>
+                                <th style="background:#d35400;">Kategori (Jajan Siapa)</th>
+                                <th style="background:#d35400; text-align:center;">Jumlah Transaksi (Satuan)</th>
+                                <th style="background:#d35400; text-align:right;">Jumlah Transaksi (Rupiah)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelPivotPribadi">
+                            <tr><td colspan="3" style="text-align:center;">Memuat data...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h2>📜 Riwayat Pengeluaran Pribadi</h2>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Tanggal</th>
+                                <th>Nama Pengeluaran</th>
+                                <th>Jajan Siapa</th>
+                                <th>Nominal</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelRiwayatPribadi"></tbody>
+                    </table>
+                </div>
+            </div>
+
             <div id="legalitas" class="page">
                 <h1>Legalitas & Informasi Warung</h1>
                 <div class="report-box">
@@ -407,7 +462,6 @@
                 </div>
 
                 <div id="hasilFilterDiv" style="display:none;">
-                    
                     <div class="dash-grid">
                         <div class="dash-card" style="background-color:#16a085;"><h3>Total Trx</h3><div class="nilai" id="hasilFltTrx">0</div></div>
                         <div class="dash-card" style="background-color:#2980b9;"><h3>Total Omset</h3><div class="nilai" id="hasilFltOmset">Rp 0</div></div>
@@ -510,6 +564,7 @@
                 else if (modul === 'pl_nondigital') eksekusiSimpanPLNonDigital();
                 else if (modul === 'stok') eksekusiSimpanLogStok();
                 else if (modul === 'pengeluaran') eksekusiSimpanPengeluaran();
+                else if (modul === 'pribadi') eksekusiSimpanPribadi();
             }
         }
 
@@ -642,8 +697,6 @@
 
             keranjangBelanja.forEach((item, index) => {
                 let uniqueId = no + (keranjangBelanja.length > 1 ? "-" + (index + 1) : "");
-                
-                // Laba dihitung dari Total Admin dikurangi Diskon (sesuai aturan baru)
                 let labaItem = (item.total_admin - item.diskon);
                 if (labaItem < 0) labaItem = 0;
 
@@ -756,6 +809,121 @@
             eksekusiFilter(); hitungLabaRugi(); renderAkuntansi();
         });
 
+        // === MODUL 8: PENGELUARAN PRIBADI ===
+        document.getElementById('pribadiTanggal').value = tglHariIni;
+
+        function cekPilihanPribadi() {
+            let val = document.getElementById('pribadiPilihan').value;
+            let groupOther = document.getElementById('groupOtherPribadi');
+            if(val === 'Other') {
+                groupOther.style.display = 'flex';
+            } else {
+                groupOther.style.display = 'none';
+                document.getElementById('pribadiOtherInput').value = '';
+            }
+        }
+
+        function eksekusiSimpanPribadi() {
+            let tgl = document.getElementById('pribadiTanggal').value;
+            let nama = document.getElementById('pribadiNama').value.trim();
+            let pilihan = document.getElementById('pribadiPilihan').value;
+            let otherVal = document.getElementById('pribadiOtherInput').value.trim();
+            let nominal = parseInt(document.getElementById('pribadiNominal').value) || 0;
+
+            if(!tgl || !nama || nominal <= 0) {
+                return alert("Mohon lengkapi tanggal, nama pengeluaran, dan nominal dengan benar!");
+            }
+
+            let kategoriJajan = pilihan === 'Other' ? (otherVal ? otherVal : 'Lainnya') : pilihan;
+            let id = "PRIBADI-" + new Date().getTime();
+
+            let dataPribadi = {
+                id: id,
+                tanggal: tgl,
+                nama: nama,
+                jajan_siapa: kategoriJajan,
+                nominal: nominal
+            };
+
+            db.ref('warung/pengeluaran_pribadi/' + id).set(dataPribadi).then(() => {
+                alert("Pengeluaran pribadi berhasil disimpan!");
+                document.getElementById('pribadiNama').value = '';
+                document.getElementById('pribadiNominal').value = '';
+                document.getElementById('pribadiPilihan').value = 'Lisa';
+                cekPilihanPribadi();
+            });
+        }
+
+        function hapusPribadi(id) {
+            if(confirm("Hapus data pengeluaran pribadi ini?")) {
+                db.ref('warung/pengeluaran_pribadi/' + id).remove();
+            }
+        }
+
+        db.ref('warung/pengeluaran_pribadi').on('value', snap => {
+            let tabelRiwayat = document.getElementById('tabelRiwayatPribadi');
+            let tabelPivot = document.getElementById('tabelPivotPribadi');
+            tabelRiwayat.innerHTML = '';
+            
+            let dataArr = [];
+            let pivotMap = {};
+
+            snap.forEach(c => {
+                let p = c.val();
+                dataArr.push(p);
+
+                // Rekap pivot
+                let kat = p.jajan_siapa || "Lainnya";
+                if(!pivotMap[kat]) {
+                    pivotMap[kat] = { satuan: 0, rupiah: 0 };
+                }
+                pivotMap[kat].satuan += 1;
+                pivotMap[kat].rupiah += parseInt(p.nominal || 0);
+            });
+
+            // Render Riwayat
+            [...dataArr].reverse().forEach(p => {
+                tabelRiwayat.innerHTML += `<tr>
+                    <td>${p.tanggal}</td>
+                    <td>${p.nama}</td>
+                    <td><span class="badge" style="background-color: #d35400;">${p.jajan_siapa}</span></td>
+                    <td>Rp ${parseInt(p.nominal).toLocaleString()}</td>
+                    <td><button class="btn-del" onclick="hapusPribadi('${p.id}')">Del</button></td>
+                </tr>`;
+            });
+
+            if(dataArr.length === 0) {
+                tabelRiwayat.innerHTML = `<tr><td colspan="5" style="text-align:center;">Belum ada data pengeluaran pribadi</td></tr>`;
+            }
+
+            // Render Pivot
+            tabelPivot.innerHTML = '';
+            let adaPivot = false;
+            let totalSatuanGlobal = 0, totalRupiahGlobal = 0;
+
+            for(let kat in pivotMap) {
+                adaPivot = true;
+                totalSatuanGlobal += pivotMap[kat].satuan;
+                totalRupiahGlobal += pivotMap[kat].rupiah;
+
+                tabelPivot.innerHTML += `<tr>
+                    <td><b>${kat}</b></td>
+                    <td style="text-align:center;">${pivotMap[kat].satuan} transaksi</td>
+                    <td style="text-align:right;">Rp ${pivotMap[kat].rupiah.toLocaleString()}</td>
+                </tr>`;
+            }
+
+            if(!adaPivot) {
+                tabelPivot.innerHTML = `<tr><td colspan="3" style="text-align:center;">Belum ada data untuk ditampilkan pada pivot</td></tr>`;
+            } else {
+                tabelPivot.innerHTML += `<tr style="background:#f8f9fa; font-weight:bold;">
+                    <td>TOTAL KESELURUHAN</td>
+                    <td style="text-align:center;">${totalSatuanGlobal} transaksi</td>
+                    <td style="text-align:right;">Rp ${totalRupiahGlobal.toLocaleString()}</td>
+                </tr>`;
+            }
+        });
+
         // === MODUL 10: FILTER & PIVOT ===
         let globalDataFilter = []; 
         
@@ -793,8 +961,6 @@
                 if(t.status === "Sukses") { 
                     trxT++; 
                     omsetT += t.total_bayar; 
-                    
-                    // Laba dihitung dari total_admin dikurangi diskon
                     let curLaba = (t.total_admin || 0) - (t.diskon || 0);
                     if(curLaba < 0) curLaba = 0;
                     labaT += curLaba;
@@ -802,17 +968,14 @@
                     let d = t.waktu.split('T')[0]; 
                     dataChart[d] = (dataChart[d]||0) + t.total_bayar; 
 
-                    // Rekap Metode
                     if(!pivotMetode[t.metode]) pivotMetode[t.metode] = {qty:0, sum:0};
                     pivotMetode[t.metode].qty += 1;
                     pivotMetode[t.metode].sum += t.total_bayar;
 
-                    // Rekap Media
                     if(!pivotMedia[t.media]) pivotMedia[t.media] = {qty:0, sum:0};
                     pivotMedia[t.media].qty += 1;
                     pivotMedia[t.media].sum += t.total_bayar;
 
-                    // Rekap Pelanggan
                     if(!pivotPelanggan[t.pelanggan]) pivotPelanggan[t.pelanggan] = {qty:0, sum:0};
                     pivotPelanggan[t.pelanggan].qty += 1;
                     pivotPelanggan[t.pelanggan].sum += t.total_bayar;
@@ -841,7 +1004,6 @@
             document.getElementById('hasilFltOmset').innerText = 'Rp ' + omsetT.toLocaleString();
             document.getElementById('hasilFltLaba').innerText = 'Rp ' + labaT.toLocaleString();
 
-            // Format tabel pivot dengan kolom Kategori, Jumlah (Satuan), dan Jumlah (Rupiah)
             function buatHtmlPivot(judul, objData) {
                 let html = `<div class="report-box" style="margin-bottom:0; padding:10px;">
                     <h3 style="margin-top:0; color:#2c3e50; font-size:12px; border-bottom:1px dashed #ccc; padding-bottom:4px;">${judul}</h3>
