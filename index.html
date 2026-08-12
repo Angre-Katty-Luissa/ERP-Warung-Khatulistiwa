@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ERP Warung Khatulistiwa - Full Version with Scanner & Laporan</title>
+    <title>ERP Warung Khatulistiwa - Full Version Finalized</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -204,7 +204,6 @@
                 <!-- 2. KASIR & TRANSAKSI -->
                 <div id="transaksi" class="page">
                     <h1>Form Kasir (Multi-Item)</h1>
-                    <button class="btn-scan" onclick="bukaScanner('kasir')">📷 Scan Barcode Produk</button>
                     <div class="form-grid">
                         <div class="form-group"><label>No TRX</label><input type="text" id="trxNo" readonly></div>
                         <div class="form-group"><label>Tanggal & Waktu</label><input type="datetime-local" id="trxTanggal"></div>
@@ -213,7 +212,7 @@
                             <select id="trxMedia"><option>Warung</option><option>Agen Mandiri</option><option>Gopay</option><option>Tokopedia</option><option>Wondr</option></select>
                         </div>
                         <div class="form-group">
-                            <label>Nama Transaksi / Produk</label>
+                            <label>Nama Transaksi / Produk / Barcode</label>
                             <input list="listProdukKasir" id="trxNama" placeholder="Cari atau scan produk..." oninput="cekPilihanProdukKasir()">
                             <datalist id="listProdukKasir"></datalist>
                         </div>
@@ -338,8 +337,9 @@
                     <div id="nondigital" class="sub-page">
                         <button class="btn-scan" onclick="bukaScanner('pricelist')">📷 Scan Barcode Produk</button>
                         <div class="form-grid">
-                            <div class="form-group"><label>Nama Produk / Barcode</label><input type="text" id="plNonNama" placeholder="Scan atau ketik nama/barcode..." oninput="generateKodeNonDigital()"></div>
-                            <div class="form-group"><label>Kode (Otomatis)</label><input type="text" id="plNonKode" readonly></div>
+                            <div class="form-group"><label>Barcode</label><input type="text" id="plNonBarcode" placeholder="Scan atau ketik barcode..."></div>
+                            <div class="form-group"><label>Nama Produk</label><input type="text" id="plNonNama" placeholder="Beras 5Kg" oninput="generateKodeNonDigital()"></div>
+                            <div class="form-group"><label>Kode (Otomatis dari Nama)</label><input type="text" id="plNonKode" readonly></div>
                             <div class="form-group"><label>Jenis</label><select id="plNonJenis"><option>Makanan</option><option>Minuman</option><option>Kartu E-money</option><option>Lain-Lain</option></select></div>
                             <div class="form-group"><label>Harga Beli (Rp)</label><input type="number" id="plNonBeli" oninput="hitungLabaNonDigital()"></div>
                             <div class="form-group"><label>Harga Jual (Rp)</label><input type="number" id="plNonJual" oninput="hitungLabaNonDigital()"></div>
@@ -348,7 +348,7 @@
                         </div>
                         <button class="btn-submit" onclick="konfirmasiSimpan('pl_nondigital')">Simpan Fisik</button>
                         <div class="export-container"><button class="btn-excel" onclick="eksporData('pl_nondigital', 'excel')">📊 Excel</button><button class="btn-pdf" onclick="eksporData('pl_nondigital', 'pdf')">📄 PDF</button></div>
-                        <div class="table-responsive"><table><thead><tr><th>Kode</th><th>Nama</th><th>Jenis</th><th>Beli</th><th>Jual</th><th>Laba</th><th>Supplier</th><th>Aksi</th></tr></thead><tbody id="tabelPLNonDigital"></tbody></table></div>
+                        <div class="table-responsive"><table><thead><tr><th>Barcode</th><th>Kode</th><th>Nama</th><th>Jenis</th><th>Beli</th><th>Jual</th><th>Laba</th><th>Supplier</th><th>Aksi</th></tr></thead><tbody id="tabelPLNonDigital"></tbody></table></div>
                     </div>
                 </div>
 
@@ -584,7 +584,7 @@
                     </div>
                 </div>
 
-                <!-- 12. MODUL LAPORAN BULANAN (BARU) -->
+                <!-- 12. MODUL LAPORAN BULANAN -->
                 <div id="laporan" class="page">
                     <h1>Modul Laporan Bulanan</h1>
                     <div class="report-box">
@@ -608,7 +608,7 @@
                     <div id="lapPivotSummary" style="margin-top: 15px;"></div>
 
                     <div class="export-container" style="margin-top: 15px;">
-                        <button class="btn-pdf" onclick="cetakPdfLaporanBulanan()" style="background-color: #2c3e50; font-size: 14px; padding: 10px 15px;">📄 Cetak Laporan PDF Profesional</button>
+                        <button class="btn-pdf" onclick="cetakPdfLaporanBulanan()" style="background-color: #2c3e50; font-size: 14px; padding: 10px 15px;">📄 Cetak Laporan (PDF)</button>
                     </div>
                 </div>
             </div>
@@ -718,8 +718,7 @@
                 document.getElementById('trxNama').value = kode;
                 cekPilihanProdukKasir();
             } else if(activeScannerModule === 'pricelist') {
-                document.getElementById('plNonNama').value = kode;
-                generateKodeNonDigital();
+                document.getElementById('plNonBarcode').value = kode;
             } else if(activeScannerModule === 'stok') {
                 let select = document.getElementById('stokProduk');
                 for(let opt of select.options) {
@@ -770,6 +769,7 @@
                 document.getElementById('plDigFee').value = '';
                 document.getElementById('plDigTotalAdmin').value = '';
             } else if(modul === 'pl_nondigital') {
+                document.getElementById('plNonBarcode').value = '';
                 document.getElementById('plNonNama').value = '';
                 document.getElementById('plNonKode').value = '';
                 document.getElementById('plNonBeli').value = '';
@@ -844,7 +844,7 @@
 
         let daftarHargaProduk = {}, daftarTotalAdminProduk = {}, daftarLabaProduk = {}, daftarKategoriProduk = {};
         function cekPilihanProdukKasir() {
-            let val = document.getElementById('trxNama').value;
+            let val = document.getElementById('trxNama').value.trim();
             if(daftarHargaProduk[val] !== undefined) {
                 document.getElementById('trxNominal').value = daftarHargaProduk[val];
                 document.getElementById('trxTotalAdmin').value = daftarTotalAdminProduk[val] !== undefined ? daftarTotalAdminProduk[val] : 0;
@@ -861,9 +861,9 @@
             let total_admin = parseInt(document.getElementById('trxTotalAdmin').value) || 0;
             let diskon = parseInt(document.getElementById('trxDiskon').value) || 0;
             let subtotal = parseInt(document.getElementById('trxSubtotal').value) || 0;
-            let kategori = daftarKategoriProduk[nama] || "digital"; // default digital jika tidak ditemukan di fisik
-            let feeWarung = daftarLabaProduk[nama] || 0; // fee untuk digital
-            let labaFisik = daftarLabaProduk[nama] || 0; // laba untuk non-digital
+            let kategori = daftarKategoriProduk[nama] || "digital"; 
+            let feeWarung = daftarLabaProduk[nama] || 0; 
+            let labaFisik = daftarLabaProduk[nama] || 0; 
 
             let item = {
                 nama: nama,
@@ -936,9 +936,6 @@
             keranjangBelanja.forEach((item, index) => {
                 let uniqueId = no + (keranjangBelanja.length > 1 ? "-" + (index + 1) : "");
                 
-                // Perhitungan estimasi laba sesuai permintaan C:
-                // Digital: subtotal - diskon - fee_warung
-                // Non-Digital: subtotal - diskon - (laba_fisik * qty) atau laba fisik produk
                 let labaItem = 0;
                 if(item.kategori === 'digital') {
                     labaItem = item.subtotal - item.diskon - item.fee_warung;
@@ -1318,15 +1315,15 @@
                     dataChart[d] = (dataChart[d]||0) + t.total_bayar; 
 
                     if(!pivotMetode[t.metode]) pivotMetode[t.metode] = {qty:0, sum:0};
-                    pivotMetode[t.metode].qty += 1;
+                    pivotMetode[t.metode].qty += (t.qty || 1);
                     pivotMetode[t.metode].sum += t.total_bayar;
 
                     if(!pivotMedia[t.media]) pivotMedia[t.media] = {qty:0, sum:0};
-                    pivotMedia[t.media].qty += 1;
+                    pivotMedia[t.media].qty += (t.qty || 1);
                     pivotMedia[t.media].sum += t.total_bayar;
 
                     if(!pivotPelanggan[t.pelanggan]) pivotPelanggan[t.pelanggan] = {qty:0, sum:0};
-                    pivotPelanggan[t.pelanggan].qty += 1;
+                    pivotPelanggan[t.pelanggan].qty += (t.qty || 1);
                     pivotPelanggan[t.pelanggan].sum += t.total_bayar;
                 }
                 
@@ -1403,7 +1400,11 @@
             
             let totTrx = 0, totOmset = 0, totLaba = 0;
             let harianMap = {};
-            let pivotMetode = {}, pivotMedia = {}, pivotPelanggan = {};
+            
+            // Mencakup seluruh kategori yang tertera di modul Kasir / Form
+            let pivotMetode = { "Cash": {qty:0, sum:0}, "QRIS": {qty:0, sum:0}, "Transfer": {qty:0, sum:0} };
+            let pivotMedia = { "Warung": {qty:0, sum:0}, "Agen Mandiri": {qty:0, sum:0}, "Gopay": {qty:0, sum:0}, "Tokopedia": {qty:0, sum:0}, "Wondr": {qty:0, sum:0} };
+            let pivotPelanggan = { "Umum": {qty:0, sum:0}, "Keluarga": {qty:0, sum:0}, "Pribadi": {qty:0, sum:0} };
 
             filtered.forEach(t => {
                 totTrx += (t.qty || 1);
@@ -1546,7 +1547,7 @@
                 }
                 if(modul === 'operasi') return { "Tanggal": obj.tgl, "Hari": obj.hari, "Status": obj.status, "Buka": obj.buka, "Tutup": obj.tutup, "Jml Pelanggan": obj.pel };
                 if(modul === 'pl_digital') return { "Kode": obj.kode, "Nama Produk": obj.nama, "Jenis": obj.jenis, "Nominal (Rp)": obj.nominal, "Admin App": obj.adminApp, "Admin Bank": obj.adminBank, "Fee Warung": obj.fee, "Total Admin": obj.total };
-                if(modul === 'pl_nondigital') return { "Kode": obj.kode, "Nama Produk": obj.nama, "Jenis": obj.jenis, "Beli (Rp)": obj.beli, "Jual (Rp)": obj.jual, "Laba (Rp)": obj.laba, "Supplier": obj.supplier };
+                if(modul === 'pl_nondigital') return { "Barcode": obj.barcode || "-", "Kode": obj.kode, "Nama Produk": obj.nama, "Jenis": obj.jenis, "Beli (Rp)": obj.beli, "Jual (Rp)": obj.jual, "Laba (Rp)": obj.laba, "Supplier": obj.supplier };
                 if(modul === 'stok') return { "Waktu": (obj.waktu || "").replace('T',' '), "Kode": obj.kode, "Nama Produk": obj.nama, "Jenis Arus": obj.jenis, "Qty": obj.qty, "Keterangan": obj.ket };
                 if(modul === 'pengeluaran') return { "Waktu": (obj.waktu || "").replace('T',' '), "Kategori": obj.kat, "Nominal (Rp)": obj.nom, "Keterangan": obj.ket };
                 if(modul === 'belanja') return { "Tanggal": obj.tanggal, "Nama Barang": obj.nama, "Qty": obj.qty, "Estimasi Biaya (Rp)": obj.biaya, "Keterangan": obj.keterangan };
@@ -1632,18 +1633,23 @@
                 list+=`<option value="${d.nama}">`; 
                 daftarHargaProduk[d.nama]=parseInt(d.nominal||0); 
                 daftarTotalAdminProduk[d.nama]=parseInt(d.total||0); 
-                daftarLabaProduk[d.nama]=parseInt(d.fee||0); // fee warung
+                daftarLabaProduk[d.nama]=parseInt(d.fee||0); 
                 daftarKategoriProduk[d.nama] = 'digital';
             }); 
             dls.innerHTML=list; 
         });
 
         function hitungLabaNonDigital() { document.getElementById('plNonLabaRp').value = Math.max(0, (parseFloat(document.getElementById('plNonJual').value)||0) - (parseFloat(document.getElementById('plNonBeli').value)||0)); }
-        function eksekusiSimpanPLNonDigital() { let k=document.getElementById('plNonKode').value, nm=document.getElementById('plNonNama').value; if(!k||!nm) return; db.ref('warung/pricelist/nondigital/'+k).set({ kode:k, nama:nm, jenis:document.getElementById('plNonJenis').value, beli:document.getElementById('plNonBeli').value||0, jual:document.getElementById('plNonJual').value||0, laba:document.getElementById('plNonLabaRp').value||0, supplier:document.getElementById('plNonSupplier').value||'-' }).then(()=>{alert("Disimpan");}); }
+        function eksekusiSimpanPLNonDigital() { 
+            let k=document.getElementById('plNonKode').value, nm=document.getElementById('plNonNama').value, bc=document.getElementById('plNonBarcode').value.trim(); 
+            if(!k||!nm) return; 
+            db.ref('warung/pricelist/nondigital/'+k).set({ barcode: bc||"-", kode:k, nama:nm, jenis:document.getElementById('plNonJenis').value, beli:document.getElementById('plNonBeli').value||0, jual:document.getElementById('plNonJual').value||0, laba:document.getElementById('plNonLabaRp').value||0, supplier:document.getElementById('plNonSupplier').value||'-' }).then(()=>{alert("Disimpan");}); 
+        }
         function editPLNonDigital(kode) {
             db.ref('warung/pricelist/nondigital/' + kode).once('value').then(snap => {
                 let d = snap.val();
                 if(d) {
+                    document.getElementById('plNonBarcode').value = d.barcode !== "-" ? d.barcode : "";
                     document.getElementById('plNonNama').value = d.nama;
                     document.getElementById('plNonKode').value = d.kode;
                     document.getElementById('plNonJenis').value = d.jenis;
@@ -1661,15 +1667,21 @@
             snap.forEach(c=>{ 
                 let d=c.val(); 
                 masterProduk[d.kode]=d.nama; 
-                t.innerHTML+=`<tr><td>${d.kode}</td><td>${d.nama}</td><td>${d.jenis}</td><td>Rp ${parseInt(d.beli||0).toLocaleString()}</td><td>Rp ${parseInt(d.jual||0).toLocaleString()}</td><td>Rp ${parseInt(d.laba||0).toLocaleString()}</td><td>${d.supplier||'-'}</td><td><div class="btn-action-container"><button class="btn-edit" onclick="editPLNonDigital('${d.kode}')">Edit</button> <button class="btn-del" onclick="hapusPLNonDigital('${d.kode}')">Del</button></div></td></tr>`; 
+                t.innerHTML+=`<tr><td>${d.barcode||'-'}</td><td>${d.kode}</td><td>${d.nama}</td><td>${d.jenis}</td><td>Rp ${parseInt(d.beli||0).toLocaleString()}</td><td>Rp ${parseInt(d.jual||0).toLocaleString()}</td><td>Rp ${parseInt(d.laba||0).toLocaleString()}</td><td>${d.supplier||'-'}</td><td><div class="btn-action-container"><button class="btn-edit" onclick="editPLNonDigital('${d.kode}')">Edit</button> <button class="btn-del" onclick="hapusPLNonDigital('${d.kode}')">Del</button></div></td></tr>`; 
                 drop.innerHTML+=`<option value="${d.kode}">[${d.kode}] ${d.nama}</option>`; 
                 list+=`<option value="${d.nama}">`; 
-                list+=`<option value="${d.kode}">`; // Dukung scan barcode langsung
+                if(d.barcode && d.barcode !== "-") {
+                    list+=`<option value="${d.barcode}">`;
+                    daftarHargaProduk[d.barcode]=parseInt(d.jual||0);
+                    daftarTotalAdminProduk[d.barcode]=0;
+                    daftarLabaProduk[d.barcode]=parseInt(d.laba||0);
+                    daftarKategoriProduk[d.barcode] = 'nondigital';
+                }
                 daftarHargaProduk[d.nama]=parseInt(d.jual||0); 
                 daftarHargaProduk[d.kode]=parseInt(d.jual||0);
                 daftarTotalAdminProduk[d.nama]=0; 
                 daftarTotalAdminProduk[d.kode]=0;
-                daftarLabaProduk[d.nama]=parseInt(d.laba||0); // laba fisik
+                daftarLabaProduk[d.nama]=parseInt(d.laba||0); 
                 daftarLabaProduk[d.kode]=parseInt(d.laba||0);
                 daftarKategoriProduk[d.nama] = 'nondigital';
                 daftarKategoriProduk[d.kode] = 'nondigital';
