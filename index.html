@@ -9,6 +9,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- HTML5 QR Code Scanner Library -->
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
     <style>
@@ -130,7 +131,6 @@
 </head>
 <body>
 
-    <!-- Scanner Container Modal -->
     <div id="scanner-container">
         <div class="scanner-box">
             <h3 style="margin-top:0;">📷 Scan Barcode Produk</h3>
@@ -304,10 +304,19 @@
                         <div class="form-group"><label>Jam Buka</label><input type="time" id="opBuka"></div>
                         <div class="form-group"><label>Jam Tutup</label><input type="time" id="opTutup"></div>
                         <div class="form-group"><label>Sinkronisasi</label><button class="btn-sync" onclick="tarikDataOtomatis()">🔄 Tarik</button></div>
-                        <div class="form-group"><label>Jml Pelanggan</label><input type="number" id="opJmlPelanggan"></div>
+                        <div class="form-group"><label>Jml Pelanggan (Otomatis)</label><input type="number" id="opJmlPelanggan" readonly style="background-color: #ecf0f1;"></div>
                     </div>
                     <button class="btn-submit" onclick="konfirmasiSimpan('operasi')">Simpan Operasional</button>
                     <div class="export-container"><button class="btn-excel" onclick="eksporData('operasi', 'excel')">📊 Excel</button><button class="btn-pdf" onclick="eksporData('operasi', 'pdf')">📄 PDF</button></div>
+                    
+                    <div class="chart-container" style="margin-top:15px;">
+                        <h2>📈 Grafik Jam Buka & Jam Tutup Toko per Hari</h2>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;">
+                            <div><canvas id="chartOperasiBuka"></canvas></div>
+                            <div><canvas id="chartOperasiTutup"></canvas></div>
+                        </div>
+                    </div>
+
                     <div class="table-responsive"><table><thead><tr><th>Tanggal</th><th>Hari</th><th>Status</th><th>Buka-Tutup</th><th>Pelanggan</th><th>Aksi</th></tr></thead><tbody id="tabelOperasi"></tbody></table></div>
                 </div>
 
@@ -352,12 +361,11 @@
 
                 <!-- 5. ARUS STOK -->
                 <div id="stok" class="page">
-                    <h1>Arus Stok (Khusus Non-Digital)</h1>
+                    <h1>Arus Stok (Non-Digital)</h1>
                     <button class="btn-scan" onclick="bukaScanner('stok')">📷 Scan Barcode Produk</button>
                     <div class="form-grid">
-                        <div class="form-group"><label>Barcode Produk</label><input type="text" id="stokBarcode" placeholder="Scan/Ketik Barcode..." oninput="cekBarcodeStok()"></div>
-                        <div class="form-group"><label>Nama Produk</label><input type="text" id="stokNama" readonly placeholder="Nama otomatis..."></div>
-                        <div class="form-group" style="display:none;"><label>Kode</label><input type="text" id="stokKode" readonly></div>
+                        <div class="form-group"><label>Barcode Produk</label><input type="text" id="stokBarcode" placeholder="Scan barcode..." oninput="cekBarcodeStok()"></div>
+                        <div class="form-group"><label>Pilih Produk (Nama)</label><select id="stokProduk"><option value="">-- Pilih --</option></select></div>
                         <div class="form-group"><label>Waktu</label><input type="datetime-local" id="stokWaktu"></div>
                         <div class="form-group"><label>Jenis</label><select id="stokJenis"><option>Masuk</option><option>Keluar</option></select></div>
                         <div class="form-group"><label>Qty</label><input type="number" id="stokQty" value="1"></div>
@@ -366,9 +374,9 @@
                     <button class="btn-submit" onclick="konfirmasiSimpan('stok')">Catat Stok</button>
                     <div class="export-container"><button class="btn-excel" onclick="eksporData('stok', 'excel')">📊 Excel</button><button class="btn-pdf" onclick="eksporData('stok', 'pdf')">📄 PDF</button></div>
                     <h2>Log Arus Stok</h2>
-                    <div class="table-responsive"><table><thead><tr><th>Waktu</th><th>Barcode</th><th>Nama</th><th>Jenis</th><th>Qty</th><th>Ket</th><th>Aksi</th></tr></thead><tbody id="tabelStokLog"></tbody></table></div>
+                    <div class="table-responsive"><table><thead><tr><th>Waktu</th><th>Barcode</th><th>Kode</th><th>Nama</th><th>Jenis</th><th>Qty</th><th>Ket</th><th>Aksi</th></tr></thead><tbody id="tabelStokLog"></tbody></table></div>
                     <h2>Sisa Stok Tersedia</h2>
-                    <div class="table-responsive"><table><thead><tr><th>Kode</th><th>Barcode</th><th>Nama</th><th>Sisa</th></tr></thead><tbody id="tabelStokTotal"></tbody></table></div>
+                    <div class="table-responsive"><table><thead><tr><th>Barcode</th><th>Kode</th><th>Nama</th><th>Sisa</th></tr></thead><tbody id="tabelStokTotal"></tbody></table></div>
                 </div>
 
                 <!-- 6. KEUANGAN -->
@@ -545,14 +553,14 @@
 
                 <!-- 11. BELANJA STOK -->
                 <div id="belanja" class="page">
-                    <h1>Modul Belanja / Kebutuhan Stok (Khusus Non-Digital)</h1>
+                    <h1>Modul Belanja / Kebutuhan Stok (Non-Digital)</h1>
                     <button class="btn-scan" onclick="bukaScanner('belanja')">📷 Scan Barcode Produk</button>
                     <div class="report-box">
                         <h2>Catat Daftar Belanja Warung</h2>
                         <div class="form-grid">
                             <div class="form-group"><label>Tanggal</label><input type="date" id="belanjaTanggal"></div>
-                            <div class="form-group"><label>Barcode (Opsional)</label><input type="text" id="belanjaBarcode" placeholder="Scan Barcode..." oninput="cekBarcodeBelanja()"></div>
-                            <div class="form-group"><label>Nama Barang</label><input type="text" id="belanjaNama" placeholder="Ketik atau scan nama barang..."></div>
+                            <div class="form-group"><label>Barcode</label><input type="text" id="belanjaBarcode" placeholder="Scan Barcode..." oninput="cekBarcodeBelanja()"></div>
+                            <div class="form-group"><label>Nama Barang</label><input type="text" id="belanjaNama" placeholder="Ketik nama barang..."></div>
                             <div class="form-group"><label>Qty / Jumlah</label><input type="number" id="belanjaQty" value="1"></div>
                             <div class="form-group"><label>Estimasi Biaya (Rp)</label><input type="number" id="belanjaBiaya" placeholder="0"></div>
                             <div class="form-group"><label>Keterangan / Supplier</label><input type="text" id="belanjaKet" placeholder="Toko / Pasar / Supplier"></div>
@@ -605,6 +613,14 @@
                     <div class="chart-container">
                         <h2>📈 Grafik Omset Harian Bulan Ini</h2>
                         <canvas id="chartLaporanBulanan"></canvas>
+                    </div>
+
+                    <div class="chart-container" style="margin-top: 15px;">
+                        <h2>📈 Grafik Jam Buka & Jam Tutup Toko per Hari (Modul Operasi)</h2>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;">
+                            <div><canvas id="chartLaporanBukaBulanan"></canvas></div>
+                            <div><canvas id="chartLaporanTutupBulanan"></canvas></div>
+                        </div>
                     </div>
 
                     <div id="lapPivotSummary" style="margin-top: 15px;"></div>
@@ -776,8 +792,7 @@
                 document.getElementById('plNonSupplier').value = '';
             } else if(modul === 'stok') {
                 document.getElementById('stokBarcode').value = '';
-                document.getElementById('stokNama').value = '';
-                document.getElementById('stokKode').value = '';
+                document.getElementById('stokProduk').value = '';
                 document.getElementById('stokQty').value = '1';
                 document.getElementById('stokKet').value = '';
             } else if(modul === 'pengeluaran') {
@@ -815,6 +830,8 @@
         }
 
         let myChartMingguan = null, myChartBulanan = null, myChartTahunan = null, chartFilterObj = null, chartLaporanObj = null;
+        let chartOpBukaObj = null, chartOpTutupObj = null, chartLapBukaObj = null, chartLapTutupObj = null;
+
         function inisialisasiChart(dataMingguan, dataBulanan, dataTahunan) {
             if(myChartMingguan) myChartMingguan.destroy();
             myChartMingguan = new Chart(document.getElementById('chartMingguan').getContext('2d'), { type: 'line', data: { labels: dataMingguan.labels, datasets: [{ label: 'Omset Mingguan (Rp)', data: dataMingguan.values, borderColor: '#3498db', backgroundColor: 'rgba(52, 152, 219, 0.1)', tension: 0.3, fill: true }] } });
@@ -843,7 +860,7 @@
             document.getElementById('trxSubtotal').value = ((n * qty) + ta - d) > 0 ? ((n * qty) + ta - d) : 0;
         }
 
-        let daftarHargaProduk = {}, daftarTotalAdminProduk = {}, daftarLabaProduk = {}, daftarKategoriProduk = {};
+        let daftarHargaProduk = {}, daftarTotalAdminProduk = {}, daftarLabaProduk = {}, daftarKategoriProduk = {}, masterProdukByBarcode = {}, masterKodeByBarcode = {};
         
         function cekPilihanProdukKasir() {
             let val = document.getElementById('trxNama').value.trim();
@@ -852,6 +869,20 @@
                 document.getElementById('trxTotalAdmin').value = daftarTotalAdminProduk[val] !== undefined ? daftarTotalAdminProduk[val] : 0;
             }
             hitungTotalItem();
+        }
+
+        function cekBarcodeStok() {
+            let bc = document.getElementById('stokBarcode').value.trim();
+            if(masterKodeByBarcode[bc]) {
+                document.getElementById('stokProduk').value = masterKodeByBarcode[bc];
+            }
+        }
+
+        function cekBarcodeBelanja() {
+            let bc = document.getElementById('belanjaBarcode').value.trim();
+            if(masterProdukByBarcode[bc]) {
+                document.getElementById('belanjaNama').value = masterProdukByBarcode[bc];
+            }
         }
 
         function tambahItemKeKeranjang() {
@@ -864,7 +895,8 @@
             let diskon = parseInt(document.getElementById('trxDiskon').value) || 0;
             let subtotal = parseInt(document.getElementById('trxSubtotal').value) || 0;
             let kategori = daftarKategoriProduk[nama] || "digital"; 
-            let labaSistem = daftarLabaProduk[nama] || 0; 
+            let feeWarung = daftarLabaProduk[nama] || 0; 
+            let labaFisik = daftarLabaProduk[nama] || 0; 
 
             let item = {
                 nama: nama,
@@ -874,8 +906,8 @@
                 diskon: diskon,
                 subtotal: subtotal,
                 kategori: kategori,
-                fee_warung: kategori === 'digital' ? labaSistem : 0,
-                laba_fisik: kategori === 'nondigital' ? labaSistem : 0
+                fee_warung: feeWarung,
+                laba_fisik: labaFisik
             };
 
             keranjangBelanja.push(item);
@@ -939,10 +971,13 @@
                 
                 let labaItem = 0;
                 if(item.kategori === 'digital') {
-                    labaItem = item.fee_warung * item.qty;
+                    // Estimasi Laba Digital = Fee Warung
+                    labaItem = (item.fee_warung * item.qty) - item.diskon;
                 } else {
-                    labaItem = item.laba_fisik * item.qty;
+                    // Estimasi Laba Non-Digital = Laba
+                    labaItem = (item.laba_fisik * item.qty) - item.diskon;
                 }
+                if (labaItem < 0) labaItem = 0;
 
                 let dataTrx = {
                     no_trx: uniqueId,
@@ -978,11 +1013,8 @@
                 document.getElementById('trxMetode').value = t.metode || "Cash";
                 document.getElementById('trxStatus').value = t.status || "Sukses";
                 
-                let labaFisik = t.kategori === 'nondigital' ? (t.laba / (t.qty || 1)) : 0;
-                let feeWarung = t.kategori === 'digital' ? (t.laba / (t.qty || 1)) : 0;
-                
                 keranjangBelanja = [{
-                    nama: t.nama, qty: t.qty, nominal: t.nominal, total_admin: t.total_admin, diskon: t.diskon, subtotal: t.total_bayar, kategori: t.kategori || 'digital', fee_warung: feeWarung, laba_fisik: labaFisik
+                    nama: t.nama, qty: t.qty, nominal: t.nominal, total_admin: t.total_admin, diskon: t.diskon, subtotal: t.total_bayar, kategori: t.kategori || 'digital', fee_warung: 0, laba_fisik: t.laba || 0
                 }];
                 renderTabelKeranjang();
                 bukaMenu('transaksi', document.querySelector('.sidebar button:nth-child(2)'));
@@ -1038,8 +1070,10 @@
                 if(t.waktu.startsWith(tglHariIni) && t.status==="Sukses") { trxHariIniG++; omsetHariIniG += t.total_bayar; }
             });
 
-            // Urutkan berdasarkan waktu kronologis dari terlama ke terbaru
-            [...dataTransaksiGlobal].sort((a, b) => new Date(a.waktu) - new Date(b.waktu)).forEach(t => {
+            // Sorting Newest to Oldest Date
+            dataTransaksiGlobal.sort((a,b) => new Date(b.waktu) - new Date(a.waktu));
+
+            dataTransaksiGlobal.forEach(t => {
                 let bg = t.status==="Sukses" ? "bg-success" : (t.status==="Pending" ? "bg-pending" : "bg-danger");
                 tTrx.innerHTML += `<tr>
                     <td>${t.no_trx}</td>
@@ -1070,6 +1104,7 @@
             
             eksekusiFilter(); hitungLabaRugi(); renderAkuntansi();
             if(document.getElementById('laporan').classList.contains('active')) muatLaporanBulanan();
+            updateOtomatisJumlahPelangganOperasi();
         });
 
         // === MODUL 8: PENGELUARAN PRIBADI ===
@@ -1164,8 +1199,10 @@
                 pivotMap[kat].rupiah += parseInt(p.nominal || 0);
             });
 
-            // Urutkan berdasarkan tanggal terlama ke terbaru
-            dataArr.sort((a, b) => new Date(a.tanggal) - new Date(b.tanggal)).forEach(p => {
+            // Sorting terbaru ke terlama
+            dataArr.sort((a,b) => new Date(b.tanggal) - new Date(a.tanggal));
+
+            dataArr.forEach(p => {
                 tabelRiwayat.innerHTML += `<tr>
                     <td>${p.tanggal}</td>
                     <td>${p.nama}</td>
@@ -1214,16 +1251,9 @@
         // === MODUL 11: BELANJA STOK ===
         document.getElementById('belanjaTanggal').value = tglHariIni;
 
-        function cekBarcodeBelanja() {
-            let bc = document.getElementById('belanjaBarcode').value.trim();
-            if(masterProdukData[bc]) {
-                document.getElementById('belanjaNama').value = masterProdukData[bc].nama;
-            }
-        }
-
         function eksekusiSimpanBelanja() {
             let tgl = document.getElementById('belanjaTanggal').value;
-            let bc = document.getElementById('belanjaBarcode').value.trim() || "-";
+            let bc = document.getElementById('belanjaBarcode').value.trim();
             let nama = document.getElementById('belanjaNama').value.trim();
             let qty = parseInt(document.getElementById('belanjaQty').value) || 1;
             let biaya = parseInt(document.getElementById('belanjaBiaya').value) || 0;
@@ -1231,7 +1261,7 @@
 
             if(!tgl || !nama) return alert("Tanggal dan nama barang harus diisi!");
             let id = "BLJ-" + new Date().getTime();
-            let dataBlj = { id: id, tanggal: tgl, barcode: bc, nama: nama, qty: qty, biaya: biaya, keterangan: ket };
+            let dataBlj = { id: id, tanggal: tgl, barcode: bc||"-", nama: nama, qty: qty, biaya: biaya, keterangan: ket };
 
             db.ref('warung/belanja/' + id).set(dataBlj).then(() => {
                 alert("Daftar belanja berhasil disimpan!");
@@ -1267,8 +1297,11 @@
             tbody.innerHTML = '';
             let arr = [];
             snap.forEach(c => arr.push(c.val()));
-            // Urutkan berdasarkan tanggal terlama ke terbaru
-            arr.sort((a, b) => new Date(a.tanggal) - new Date(b.tanggal)).forEach(b => {
+            
+            // Sorting dari yang terbaru
+            arr.sort((a,b) => new Date(b.tanggal) - new Date(a.tanggal));
+
+            arr.forEach(b => {
                 tbody.innerHTML += `<tr>
                     <td>${b.tanggal}</td>
                     <td>${b.barcode || '-'}</td>
@@ -1312,8 +1345,8 @@
                 return match;
             });
 
-            // Urutkan kronologis dari terlama ke terbaru
-            globalDataFilter = [...filtered].sort((a, b) => new Date(a.waktu) - new Date(b.waktu));
+            // Menyortir terbaru ke terlama
+            globalDataFilter = [...filtered].sort((a,b) => new Date(b.waktu) - new Date(a.waktu));
             document.getElementById('hasilFilterDiv').style.display = 'block';
             let tFilter = document.getElementById('tabelHasilFilter'); tFilter.innerHTML = '';
             
@@ -1407,8 +1440,70 @@
             eksekusiFilter(); document.getElementById('hasilFilterDiv').style.display = 'none';
         }
 
-        // === MODUL 12: LAPORAN BULANAN ===
-        let globalDataLaporan = { totTrx: 0, totOmset: 0, totLaba: 0, harianLabels: [], harianValues: [], pivotMetode: {}, pivotMedia: {}, pivotPelanggan: {} };
+        // === MODUL 3 & 12: OPERASI & LAPORAN BULANAN ===
+        let globalDataOperasiBuka = {};
+        let globalDataOperasiTutup = {};
+
+        db.ref('warung/operasi').on('value', snap => {
+            globalDataOperasiBuka = {};
+            globalDataOperasiTutup = {};
+            snap.forEach(c => {
+                let o = c.val();
+                globalDataOperasiBuka[o.tgl] = o.buka || "-";
+                globalDataOperasiTutup[o.tgl] = o.tutup || "-";
+            });
+            renderGrafikOperasi();
+        });
+
+        function updateOtomatisJumlahPelangganOperasi() {
+            let tglPilih = document.getElementById('opTanggal').value;
+            if(!tglPilih) return;
+            let countPelanggan = 0;
+            dataTransaksiGlobal.forEach(t => {
+                if(t.status === "Sukses" && t.waktu.startsWith(tglPilih)) {
+                    countPelanggan += (parseInt(t.qty) || 1);
+                }
+            });
+            document.getElementById('opJmlPelanggan').value = countPelanggan;
+        }
+
+        function tarikDataOtomatis() {
+            updateOtomatisJumlahPelangganOperasi();
+            alert("Jumlah pelanggan berhasil ditarik otomatis dari data transaksi Kasir!");
+        }
+
+        function renderGrafikOperasi() {
+            let tgls = Object.keys(globalDataOperasiBuka).sort();
+            let valsBuka = tgls.map(t => globalDataOperasiBuka[t]);
+            let valsTutup = tgls.map(t => globalDataOperasiTutup[t]);
+            if(tgls.length === 0) { tgls = [tglHariIni]; valsBuka = ["-"]; valsTutup = ["-"]; }
+
+            if(chartOpBukaObj) chartOpBukaObj.destroy();
+            let ctxBuka = document.getElementById('chartOperasiBuka');
+            if(ctxBuka) {
+                chartOpBukaObj = new Chart(ctxBuka.getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: tgls,
+                        datasets: [{ label: 'Jam Buka Toko (per Hari)', data: valsBuka, borderColor: '#27ae60', backgroundColor: 'rgba(39, 174, 96, 0.1)', tension: 0.3, fill: true }]
+                    }
+                });
+            }
+
+            if(chartOpTutupObj) chartOpTutupObj.destroy();
+            let ctxTutup = document.getElementById('chartOperasiTutup');
+            if(ctxTutup) {
+                chartOpTutupObj = new Chart(ctxTutup.getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: tgls,
+                        datasets: [{ label: 'Jam Tutup Toko (per Hari)', data: valsTutup, borderColor: '#e74c3c', backgroundColor: 'rgba(231, 76, 60, 0.1)', tension: 0.3, fill: true }]
+                    }
+                });
+            }
+        }
+
+        let globalDataLaporan = { totTrx: 0, totOmset: 0, totLaba: 0, harianLabels: [], harianValues: [], opLabels: [], opBukaVals: [], opTutupVals: [], pivotMetode: {}, pivotMedia: {}, pivotPelanggan: {} };
 
         function muatLaporanBulanan() {
             let blnVal = document.getElementById('lapBulanTahun').value;
@@ -1448,14 +1543,44 @@
             document.getElementById('lapTotOmset').innerText = 'Rp ' + totOmset.toLocaleString();
             document.getElementById('lapTotLaba').innerText = 'Rp ' + totLaba.toLocaleString();
 
-            globalDataLaporan = { totTrx, totOmset, totLaba, harianLabels: Object.keys(harianMap).sort(), harianValues: Object.keys(harianMap).sort().map(k => harianMap[k]), pivotMetode, pivotMedia, pivotPelanggan };
+            let harianLabels = Object.keys(harianMap).sort();
+            let harianValues = harianLabels.map(k => harianMap[k]);
+
+            let opLabels = [], opBukaVals = [], opTutupVals = [];
+            Object.keys(globalDataOperasiBuka).sort().forEach(tgl => {
+                if(tgl.startsWith(blnVal)) {
+                    opLabels.push(tgl);
+                    opBukaVals.push(globalDataOperasiBuka[tgl]);
+                    opTutupVals.push(globalDataOperasiTutup[tgl]);
+                }
+            });
+
+            globalDataLaporan = { totTrx, totOmset, totLaba, harianLabels, harianValues, opLabels, opBukaVals, opTutupVals, pivotMetode, pivotMedia, pivotPelanggan };
 
             if(chartLaporanObj) chartLaporanObj.destroy();
             chartLaporanObj = new Chart(document.getElementById('chartLaporanBulanan').getContext('2d'), {
                 type: 'line',
                 data: {
-                    labels: globalDataLaporan.harianLabels,
-                    datasets: [{ label: 'Omset Harian (Rp)', data: globalDataLaporan.harianValues, borderColor: '#27ae60', backgroundColor: 'rgba(39, 174, 96, 0.1)', tension: 0.3, fill: true }]
+                    labels: harianLabels,
+                    datasets: [{ label: 'Omset Harian (Rp)', data: harianValues, borderColor: '#27ae60', backgroundColor: 'rgba(39, 174, 96, 0.1)', tension: 0.3, fill: true }]
+                }
+            });
+
+            if(chartLapBukaObj) chartLapBukaObj.destroy();
+            chartLapBukaObj = new Chart(document.getElementById('chartLaporanBukaBulanan').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: opLabels.length > 0 ? opLabels : ['-'],
+                    datasets: [{ label: 'Jam Buka Toko', data: opBukaVals.length > 0 ? opBukaVals : ['-'], borderColor: '#27ae60', backgroundColor: 'rgba(39, 174, 96, 0.1)', tension: 0.3, fill: true }]
+                }
+            });
+
+            if(chartLapTutupObj) chartLapTutupObj.destroy();
+            chartLapTutupObj = new Chart(document.getElementById('chartLaporanTutupBulanan').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: opLabels.length > 0 ? opLabels : ['-'],
+                    datasets: [{ label: 'Jam Tutup Toko', data: opTutupVals.length > 0 ? opTutupVals : ['-'], borderColor: '#e74c3c', backgroundColor: 'rgba(231, 76, 60, 0.1)', tension: 0.3, fill: true }]
                 }
             });
 
@@ -1521,6 +1646,36 @@
             });
 
             let finalY = doc.lastAutoTable.finalY + 10;
+            let canvasOmset = document.getElementById('chartLaporanBulanan');
+            if(canvasOmset) {
+                let imgOmset = canvasOmset.toDataURL("image/png");
+                doc.text("Grafik Omset Harian", 14, finalY);
+                doc.addImage(imgOmset, 'PNG', 14, finalY + 5, 180, 60);
+                finalY += 70;
+            }
+
+            if(finalY > 220) { doc.addPage(); finalY = 20; }
+
+            let canvasBuka = document.getElementById('chartLaporanBukaBulanan');
+            if(canvasBuka) {
+                let imgBuka = canvasBuka.toDataURL("image/png");
+                doc.text("Grafik Jam Buka Toko (per Hari)", 14, finalY);
+                doc.addImage(imgBuka, 'PNG', 14, finalY + 5, 180, 60);
+                finalY += 70;
+            }
+
+            if(finalY > 220) { doc.addPage(); finalY = 20; }
+
+            let canvasTutup = document.getElementById('chartLaporanTutupBulanan');
+            if(canvasTutup) {
+                let imgTutup = canvasTutup.toDataURL("image/png");
+                doc.text("Grafik Jam Tutup Toko (per Hari)", 14, finalY);
+                doc.addImage(imgTutup, 'PNG', 14, finalY + 5, 180, 60);
+                finalY += 70;
+            }
+
+            if(finalY > 200) { doc.addPage(); finalY = 20; }
+
             doc.text("Pivot Metode Pembayaran", 14, finalY);
             let rowsMetode = [];
             for(let k in globalDataLaporan.pivotMetode) {
@@ -1582,6 +1737,11 @@
             db.ref('warung/' + path).once('value').then(snap => {
                 let arr = []; snap.forEach(c => arr.push(c.val()));
                 if(arr.length===0) return alert("Data Kosong");
+                
+                // Urutkan saat ekspor juga jika diperlukan
+                if(modul === 'transaksi' || modul === 'pengeluaran' || modul === 'stok') { arr.sort((a,b) => new Date(b.waktu) - new Date(a.waktu)); }
+                if(modul === 'operasi' || modul === 'belanja' || modul === 'pribadi') { arr.sort((a,b) => new Date(b.tanggal||b.tgl) - new Date(a.tanggal||a.tgl)); }
+                
                 prosesEksporFile(getMappedData(modul, arr), modul.toUpperCase(), format);
             });
         }
@@ -1598,16 +1758,46 @@
         }
 
         // --- LAINNYA ---
-        document.getElementById('opTanggal').value = tglHariIni; function setHariOtomatis() { const h=["Minggu","Senin","Selasa","Rabu","Kamis","Jumat","Sabtu"]; document.getElementById('opHari').value = h[new Date(document.getElementById('opTanggal').value).getDay()]; } setHariOtomatis();
-        function eksekusiSimpanOperasi() { let tg=document.getElementById('opTanggal').value; db.ref('warung/operasi/'+tg).set({ tgl:tg, hari:document.getElementById('opHari').value, status:document.getElementById('opStatus').value, buka:document.getElementById('opBuka').value||"-", tutup:document.getElementById('opTutup').value||"-", pel:document.getElementById('opJmlPelanggan').value||0 }).then(()=>alert("Disimpan!")); }
-        function editOperasi(t,s,b,tu,p){ document.getElementById('opTanggal').value=t; setHariOtomatis(); document.getElementById('opStatus').value=s; document.getElementById('opBuka').value=b; document.getElementById('opTutup').value=tu; document.getElementById('opJmlPelanggan').value=p; }
+        document.getElementById('opTanggal').value = tglHariIni; 
+        function setHariOtomatis() { 
+            const h=["Minggu","Senin","Selasa","Rabu","Kamis","Jumat","Sabtu"]; 
+            document.getElementById('opHari').value = h[new Date(document.getElementById('opTanggal').value).getDay()]; 
+            updateOtomatisJumlahPelangganOperasi();
+        } 
+        setHariOtomatis();
+
+        function eksekusiSimpanOperasi() { 
+            let tg=document.getElementById('opTanggal').value; 
+            db.ref('warung/operasi/'+tg).set({ 
+                tgl:tg, 
+                hari:document.getElementById('opHari').value, 
+                status:document.getElementById('opStatus').value, 
+                buka:document.getElementById('opBuka').value||"-", 
+                tutup:document.getElementById('opTutup').value||"-", 
+                pel:parseInt(document.getElementById('opJmlPelanggan').value)||0 
+            }).then(()=>alert("Disimpan!")); 
+        }
+
+        function editOperasi(t,s,b,tu,p){ 
+            document.getElementById('opTanggal').value=t; 
+            setHariOtomatis(); 
+            document.getElementById('opStatus').value=s; 
+            document.getElementById('opBuka').value=b; 
+            document.getElementById('opTutup').value=tu; 
+            document.getElementById('opJmlPelanggan').value=p; 
+        }
+
         function hapusOperasi(t){ if(confirm("Hapus?")) db.ref('warung/operasi/'+t).remove(); }
+        
         db.ref('warung/operasi').on('value', snap => { 
             let tOp=document.getElementById('tabelOperasi'); tOp.innerHTML=''; 
             let arrOp = [];
             snap.forEach(c => arrOp.push(c.val()));
-            // Urutkan berdasarkan tanggal terlama ke terbaru
-            arrOp.sort((a,b) => new Date(a.tgl) - new Date(b.tgl)).forEach(o => {
+            
+            // Sorting terbaru
+            arrOp.sort((a,b) => new Date(b.tgl) - new Date(a.tgl));
+
+            arrOp.forEach(o=>{
                 tOp.innerHTML+=`<tr>
                     <td>${o.tgl}</td>
                     <td>${o.hari}</td>
@@ -1682,92 +1872,68 @@
         }
         function hapusPLNonDigital(k){ if(confirm("Hapus?")) db.ref('warung/pricelist/nondigital/'+k).remove(); }
         
-        let masterProdukData = {}; // Global dictionary untuk menyimpan mapping Barcode
+        let masterProduk = {}; 
         db.ref('warung/pricelist/nondigital').on('value', snap => { 
-            let t=document.getElementById('tabelPLNonDigital'), dls=document.getElementById('listProdukKasir'); 
-            t.innerHTML=''; 
-            let list=dls.innerHTML; 
-            masterProdukData = {};
-
+            let t=document.getElementById('tabelPLNonDigital'), drop=document.getElementById('stokProduk'), dls=document.getElementById('listProdukKasir'); t.innerHTML=''; drop.innerHTML='<option value="">-- Pilih --</option>'; let list=dls.innerHTML; 
+            masterProdukByBarcode = {};
+            masterKodeByBarcode = {};
+            
             snap.forEach(c=>{ 
                 let d=c.val(); 
-                if (d.barcode && d.barcode !== "-") {
-                    masterProdukData[d.barcode] = { kode: d.kode, nama: d.nama };
-                }
-
+                masterProduk[d.kode]=d.nama; 
                 t.innerHTML+=`<tr><td>${d.barcode||'-'}</td><td>${d.kode}</td><td>${d.nama}</td><td>${d.jenis}</td><td>Rp ${parseInt(d.beli||0).toLocaleString()}</td><td>Rp ${parseInt(d.jual||0).toLocaleString()}</td><td>Rp ${parseInt(d.laba||0).toLocaleString()}</td><td>${d.supplier||'-'}</td><td><div class="btn-action-container"><button class="btn-edit" onclick="editPLNonDigital('${d.kode}')">Edit</button> <button class="btn-del" onclick="hapusPLNonDigital('${d.kode}')">Del</button></div></td></tr>`; 
+                drop.innerHTML+=`<option value="${d.kode}">[${d.kode}] ${d.nama}</option>`; 
                 list+=`<option value="${d.nama}">`; 
                 
                 if(d.barcode && d.barcode !== "-") {
-                    list+=`<option value="${d.barcode}">`;
+                    masterProdukByBarcode[d.barcode] = d.nama;
+                    masterKodeByBarcode[d.barcode] = d.kode;
                     daftarHargaProduk[d.barcode]=parseInt(d.jual||0);
                     daftarTotalAdminProduk[d.barcode]=0;
                     daftarLabaProduk[d.barcode]=parseInt(d.laba||0);
                     daftarKategoriProduk[d.barcode] = 'nondigital';
                 }
-
                 daftarHargaProduk[d.nama]=parseInt(d.jual||0); 
+                daftarHargaProduk[d.kode]=parseInt(d.jual||0);
                 daftarTotalAdminProduk[d.nama]=0; 
+                daftarTotalAdminProduk[d.kode]=0;
                 daftarLabaProduk[d.nama]=parseInt(d.laba||0); 
+                daftarLabaProduk[d.kode]=parseInt(d.laba||0);
                 daftarKategoriProduk[d.nama] = 'nondigital';
+                daftarKategoriProduk[d.kode] = 'nondigital';
             }); 
             dls.innerHTML=list; 
         });
 
         document.getElementById('stokWaktu').value = WaktuLokal();
-        
-        function cekBarcodeStok() {
-            let bc = document.getElementById('stokBarcode').value.trim();
-            if(masterProdukData[bc]) {
-                document.getElementById('stokNama').value = masterProdukData[bc].nama;
-                document.getElementById('stokKode').value = masterProdukData[bc].kode;
-            } else {
-                document.getElementById('stokNama').value = '';
-                document.getElementById('stokKode').value = '';
-            }
-        }
-
         function eksekusiSimpanLogStok() { 
-            let bc = document.getElementById('stokBarcode').value.trim() || "-";
-            let k = document.getElementById('stokKode').value;
-            let nm = document.getElementById('stokNama').value;
-            let q = parseInt(document.getElementById('stokQty').value) || 0;
+            let bc = document.getElementById('stokBarcode').value.trim();
+            let k = document.getElementById('stokProduk').value;
+            let q = parseInt(document.getElementById('stokQty').value)||0;
             let j = document.getElementById('stokJenis').value;
-            let i = "LOG-" + new Date().getTime(); 
-            if(!k || !nm || q <= 0) return alert("Produk tidak ditemukan atau Qty tidak valid!"); 
+            let i = "LOG-"+new Date().getTime(); 
+            if(!k||q<=0) return; 
             
             db.ref('warung/stok_log/'+i).set({ 
-                id: i, 
-                waktu: document.getElementById('stokWaktu').value, 
-                barcode: bc,
-                kode: k, 
-                nama: nm, 
-                jenis: j, 
-                qty: q, 
-                ket: document.getElementById('stokKet').value || '-' 
+                id:i, waktu:document.getElementById('stokWaktu').value, barcode:bc||"-", kode:k, nama:masterProduk[k]||k, jenis:j, qty:q, ket:document.getElementById('stokKet').value||'-' 
             }).then(()=>{ 
                 db.ref('warung/stok_total/'+k).once('value').then(sn=>{ 
-                    let s = sn.exists() ? sn.val().jumlah : 0; 
-                    db.ref('warung/stok_total/'+k).set({
-                        kode: k,
-                        barcode: bc,
-                        nama: nm,
-                        jumlah: j === "Masuk" ? s + q : s - q
-                    }).then(() => {
-                        alert("Stok berhasil diperbarui!");
-                        resetFormModul('stok');
-                    });
+                    let s=sn.exists()?sn.val().jumlah:0; 
+                    db.ref('warung/stok_total/'+k).set({ barcode:bc||"-", kode:k, nama:masterProduk[k]||k, jumlah:j==="Masuk"?s+q:s-q }).then(()=>alert("Stok update"));
                 }); 
             }); 
+            
+            document.getElementById('stokBarcode').value = '';
+            document.getElementById('stokProduk').value = '';
+            document.getElementById('stokQty').value = '1';
+            document.getElementById('stokKet').value = '';
         }
-
-        function editLogStok(i, k, j, q) {
+        function editLogStok(i,k,j,q) {
             db.ref('warung/stok_log/' + i).once('value').then(snap => {
                 let l = snap.val();
                 if(l) {
                     document.getElementById('stokBarcode').value = l.barcode !== "-" ? l.barcode : "";
-                    document.getElementById('stokKode').value = l.kode;
-                    document.getElementById('stokNama').value = l.nama;
+                    document.getElementById('stokProduk').value = l.kode;
                     document.getElementById('stokWaktu').value = l.waktu;
                     document.getElementById('stokJenis').value = l.jenis;
                     document.getElementById('stokQty').value = l.qty;
@@ -1780,18 +1946,20 @@
                 }
             });
         }
-
         function hapusLogStok(i,k,j,q) { if(confirm("Hapus?")){db.ref('warung/stok_total/'+k).once('value').then(sn=>{let s=sn.exists()?sn.val().jumlah:0; db.ref('warung/stok_total/'+k).update({jumlah:j==="Masuk"?s-q:s+q}); db.ref('warung/stok_log/'+i).remove();});} }
-        
         db.ref('warung/stok_log').on('value', snap=>{
             let t=document.getElementById('tabelStokLog'); t.innerHTML=''; 
-            let arr = [];
-            snap.forEach(c => arr.push(c.val()));
-            // Urutkan kronologis dari terlama ke terbaru
-            arr.sort((a,b) => new Date(a.waktu) - new Date(b.waktu)).forEach(l => {
+            let logArr = [];
+            snap.forEach(c => logArr.push(c.val()));
+            
+            // Sorting Terbaru
+            logArr.sort((a,b) => new Date(b.waktu) - new Date(a.waktu));
+
+            logArr.forEach(l=>{
                 t.innerHTML+=`<tr>
                     <td>${l.waktu.replace('T',' ')}</td>
                     <td>${l.barcode || '-'}</td>
+                    <td>${l.kode}</td>
                     <td>${l.nama}</td>
                     <td>${l.jenis}</td>
                     <td>${l.qty}</td>
@@ -1805,18 +1973,14 @@
                 </tr>`;
             });
         });
-
         db.ref('warung/stok_total').on('value', snap=>{
             let t=document.getElementById('tabelStokTotal'), c=0, a=''; t.innerHTML=''; 
             snap.forEach(ch=>{
                 let s=ch.val(); 
-                t.innerHTML+=`<tr><td>${s.kode}</td><td>${s.barcode || '-'}</td><td>${s.nama}</td><td style="${s.jumlah<=5?'color:red':'color:green'}; font-weight:bold">${s.jumlah}</td></tr>`; 
-                if(s.jumlah<=5){
-                    c++; a+=`<li>[${s.kode}] ${s.nama} - sisa ${s.jumlah}</li>`;
-                }
+                t.innerHTML+=`<tr><td>${s.barcode || '-'}</td><td>${s.kode}</td><td>${s.nama}</td><td style="${s.jumlah<=5?'color:red':'color:green'}; font-weight:bold">${s.jumlah}</td></tr>`; 
+                if(s.jumlah<=5){ c++; a+=`<li>[${s.kode}] ${s.nama} - sisa ${s.jumlah}</li>`; }
             }); 
-            document.getElementById('dashStokAlert').innerText=c; 
-            document.getElementById('dashStokList').innerHTML=c>0?a:'<li style="color:green">Aman</li>';
+            document.getElementById('dashStokAlert').innerText=c; document.getElementById('dashStokList').innerHTML=c>0?a:'<li style="color:green">Aman</li>';
         });
 
         document.getElementById('pengWaktu').value = WaktuLokal(); let totalPengG=0, dataPengeluaranGlobal=[];
@@ -1838,8 +2002,11 @@
             let t=document.getElementById('tabelPengeluaran'); t.innerHTML=''; totalPengG=0; dataPengeluaranGlobal=[]; 
             snap.forEach(c=>{let p=c.val(); dataPengeluaranGlobal.push(p); totalPengG+=p.nom;}); 
             document.getElementById('keuPengeluaran').innerText='Rp '+totalPengG.toLocaleString(); 
-            // Urutkan kronologis dari terlama ke terbaru
-            [...dataPengeluaranGlobal].sort((a,b) => new Date(a.waktu) - new Date(b.waktu)).forEach(p=> t.innerHTML+=`<tr>
+            
+            // Sort terbaru
+            dataPengeluaranGlobal.sort((a,b) => new Date(b.waktu) - new Date(a.waktu));
+
+            dataPengeluaranGlobal.forEach(p=> t.innerHTML+=`<tr>
                 <td>${p.waktu.replace('T',' ')}</td>
                 <td>${p.kat}</td>
                 <td>Rp ${p.nom.toLocaleString()}</td>
