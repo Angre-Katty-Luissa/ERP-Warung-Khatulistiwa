@@ -210,9 +210,10 @@
                         <div class="form-group"><label>Media</label>
                             <select id="trxMedia"><option>Warung</option><option>Agen Mandiri</option><option>Gopay</option><option>Tokopedia</option><option>Wondr</option></select>
                         </div>
+                        <div class="form-group"><label>Barcode</label><input type="text" id="trxBarcode" placeholder="Scan barcode..." oninput="cekBarcodeKasir()"></div>
                         <div class="form-group">
-                            <label>Nama Transaksi / Produk / Barcode</label>
-                            <input list="listProdukKasir" id="trxNama" placeholder="Cari atau scan produk..." oninput="cekPilihanProdukKasir()">
+                            <label>Nama Transaksi / Produk</label>
+                            <input list="listProdukKasir" id="trxNama" placeholder="Cari nama produk..." oninput="cekPilihanProdukKasir()">
                             <datalist id="listProdukKasir"></datalist>
                         </div>
                         <div class="form-group"><label>Qty</label><input type="number" id="trxQty" value="1" oninput="hitungTotalItem()"></div>
@@ -286,7 +287,7 @@
                         Pelanggan    : <span id="strukPel"></span><br>
                         Metode Bayar : <span id="strukMetode"></span><br>
                         ----------------------------------------<br>
-                        Nama Transaksi, Qty, Subtotal:<br>
+                        Nama Transaksi, Quality, Subtotal:<br>
                         <span id="strukItemContainer"></span>
                         ----------------------------------------<br>
                         TOTAL BAYAR: Rp <span id="strukTotal"></span><br>
@@ -305,14 +306,17 @@
                         <div class="form-group"><label>Jam Buka</label><input type="time" id="opBuka"></div>
                         <div class="form-group"><label>Jam Tutup</label><input type="time" id="opTutup"></div>
                         <div class="form-group"><label>Sinkronisasi</label><button class="btn-sync" onclick="tarikDataOtomatis()">🔄 Tarik</button></div>
-                        <div class="form-group"><label>Jml Pelanggan</label><input type="number" id="opJmlPelanggan"></div>
+                        <div class="form-group"><label>Jml Pelanggan (Otomatis dari Kasir)</label><input type="number" id="opJmlPelanggan" readonly style="background-color: #ecf0f1;"></div>
                     </div>
                     <button class="btn-submit" onclick="konfirmasiSimpan('operasi')">Simpan Operasional</button>
                     <div class="export-container"><button class="btn-excel" onclick="eksporData('operasi', 'excel')">📊 Excel</button><button class="btn-pdf" onclick="eksporData('operasi', 'pdf')">📄 PDF</button></div>
                     
                     <div class="chart-container" style="margin-top:15px;">
-                        <h2>📈 Grafik Jumlah Pelanggan Harian (Modul Operasi)</h2>
-                        <canvas id="chartOperasiHarian"></canvas>
+                        <h2>📈 Grafik Jam Buka & Jam Tutup Toko per Hari</h2>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;">
+                            <div><canvas id="chartOperasiBuka"></canvas></div>
+                            <div><canvas id="chartOperasiTutup"></canvas></div>
+                        </div>
                     </div>
 
                     <div class="table-responsive"><table><thead><tr><th>Tanggal</th><th>Hari</th><th>Status</th><th>Buka-Tutup</th><th>Pelanggan</th><th>Aksi</th></tr></thead><tbody id="tabelOperasi"></tbody></table></div>
@@ -611,8 +615,11 @@
                     </div>
 
                     <div class="chart-container" style="margin-top: 15px;">
-                        <h2>📈 Grafik Jumlah Pelanggan Harian (Modul Operasi)</h2>
-                        <canvas id="chartLaporanOperasiBulanan"></canvas>
+                        <h2>📈 Grafik Jam Buka & Jam Tutup Toko per Hari (Modul Operasi)</h2>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;">
+                            <div><canvas id="chartLaporanBukaBulanan"></canvas></div>
+                            <div><canvas id="chartLaporanTutupBulanan"></canvas></div>
+                        </div>
                     </div>
 
                     <div id="lapPivotSummary" style="margin-top: 15px;"></div>
@@ -725,8 +732,8 @@
 
         function prosesHasilScan(kode) {
             if(activeScannerModule === 'kasir') {
-                document.getElementById('trxNama').value = kode;
-                cekPilihanProdukKasir();
+                document.getElementById('trxBarcode').value = kode;
+                cekBarcodeKasir();
             } else if(activeScannerModule === 'pricelist') {
                 document.getElementById('plNonBarcode').value = kode;
             } else if(activeScannerModule === 'stok') {
@@ -760,6 +767,7 @@
         function resetFormModul(modul) {
             if(modul === 'transaksi') {
                 setFormTrx();
+                document.getElementById('trxBarcode').value = '';
                 document.getElementById('trxNama').value = '';
                 document.getElementById('trxNominal').value = '';
                 document.getElementById('trxQty').value = '1';
@@ -823,7 +831,9 @@
             return nd.toISOString().slice(0,16);
         }
 
-        let myChartMingguan = null, myChartBulanan = null, myChartTahunan = null, chartFilterObj = null, chartLaporanObj = null, chartOperasiHarianObj = null, chartLaporanOperasiObj = null;
+        let myChartMingguan = null, myChartBulanan = null, myChartTahunan = null, chartFilterObj = null, chartLaporanObj = null;
+        let chartOpBukaObj = null, chartOpTutupObj = null, chartLapBukaObj = null, chartLapTutupObj = null;
+
         function inisialisasiChart(dataMingguan, dataBulanan, dataTahunan) {
             if(myChartMingguan) myChartMingguan.destroy();
             myChartMingguan = new Chart(document.getElementById('chartMingguan').getContext('2d'), { type: 'line', data: { labels: dataMingguan.labels, datasets: [{ label: 'Omset Mingguan (Rp)', data: dataMingguan.values, borderColor: '#3498db', backgroundColor: 'rgba(52, 152, 219, 0.1)', tension: 0.3, fill: true }] } });
@@ -852,7 +862,21 @@
             document.getElementById('trxSubtotal').value = ((n * qty) + ta - d) > 0 ? ((n * qty) + ta - d) : 0;
         }
 
-        let daftarHargaProduk = {}, daftarTotalAdminProduk = {}, daftarLabaProduk = {}, daftarKategoriProduk = {};
+        let daftarHargaProduk = {}, daftarTotalAdminProduk = {}, daftarLabaProduk = {}, daftarKategoriProduk = {}, masterProdukByBarcode = {};
+        
+        function cekBarcodeKasir() {
+            let bc = document.getElementById('trxBarcode').value.trim();
+            if(masterProdukByBarcode[bc]) {
+                let namaProd = masterProdukByBarcode[bc];
+                document.getElementById('trxNama').value = namaProd;
+                if(daftarHargaProduk[bc] !== undefined) {
+                    document.getElementById('trxNominal').value = daftarHargaProduk[bc];
+                    document.getElementById('trxTotalAdmin').value = daftarTotalAdminProduk[bc] !== undefined ? daftarTotalAdminProduk[bc] : 0;
+                }
+                hitungTotalItem();
+            }
+        }
+
         function cekPilihanProdukKasir() {
             let val = document.getElementById('trxNama').value.trim();
             if(daftarHargaProduk[val] !== undefined) {
@@ -863,27 +887,20 @@
         }
 
         function tambahItemKeKeranjang() {
-            let valInput = document.getElementById('trxNama').value.trim();
-            if(!valInput) return alert("Nama produk/transaksi harus diisi!");
+            let nama = document.getElementById('trxNama').value.trim();
+            if(!nama) return alert("Nama produk/transaksi harus diisi!");
             
-            let namaFinal = valInput;
-            if(daftarHargaProduk[valInput] !== undefined) {
-                if(masterProdukByBarcode && masterProdukByBarcode[valInput]) {
-                    namaFinal = masterProdukByBarcode[valInput];
-                }
-            }
-
             let qty = parseInt(document.getElementById('trxQty').value) || 1;
             let nominal = parseInt(document.getElementById('trxNominal').value) || 0;
             let total_admin = parseInt(document.getElementById('trxTotalAdmin').value) || 0;
             let diskon = parseInt(document.getElementById('trxDiskon').value) || 0;
             let subtotal = parseInt(document.getElementById('trxSubtotal').value) || 0;
-            let kategori = daftarKategoriProduk[valInput] || daftarKategoriProduk[namaFinal] || "digital"; 
-            let feeWarung = daftarLabaProduk[valInput] || daftarLabaProduk[namaFinal] || 0; 
-            let labaFisik = daftarLabaProduk[valInput] || daftarLabaProduk[namaFinal] || 0; 
+            let kategori = daftarKategoriProduk[nama] || "digital"; 
+            let feeWarung = daftarLabaProduk[nama] || 0; 
+            let labaFisik = daftarLabaProduk[nama] || 0; 
 
             let item = {
-                nama: namaFinal,
+                nama: nama,
                 qty: qty,
                 nominal: nominal,
                 total_admin: total_admin,
@@ -897,6 +914,7 @@
             keranjangBelanja.push(item);
             renderTabelKeranjang();
 
+            document.getElementById('trxBarcode').value = '';
             document.getElementById('trxNama').value = '';
             document.getElementById('trxNominal').value = '';
             document.getElementById('trxQty').value = '1';
@@ -1013,7 +1031,7 @@
             
             let itemHtml = "";
             items.forEach(it => {
-                itemHtml += `${it.nama} x${it.qty} = Rp ${it.subtotal.toLocaleString()}<br>`;
+                itemHtml += `${it.nama}, ${it.qty}, Rp ${it.subtotal.toLocaleString()}<br>`;
             });
             document.getElementById('strukItemContainer').innerHTML = itemHtml;
             document.getElementById('strukTotal').innerText = parseInt(total).toLocaleString();
@@ -1083,6 +1101,7 @@
             
             eksekusiFilter(); hitungLabaRugi(); renderAkuntansi();
             if(document.getElementById('laporan').classList.contains('active')) muatLaporanBulanan();
+            updateOtomatisJumlahPelangganOperasi();
         });
 
         // === MODUL 8: PENGELUARAN PRIBADI ===
@@ -1407,35 +1426,69 @@
         }
 
         // === MODUL 3 & 12: OPERASI & LAPORAN BULANAN ===
-        let globalDataOperasi = {};
+        let globalDataOperasiBuka = {};
+        let globalDataOperasiTutup = {};
+
         db.ref('warung/operasi').on('value', snap => {
-            globalDataOperasi = {};
+            globalDataOperasiBuka = {};
+            globalDataOperasiTutup = {};
             snap.forEach(c => {
                 let o = c.val();
-                globalDataOperasi[o.tgl] = parseInt(o.pel || 0);
+                globalDataOperasiBuka[o.tgl] = o.buka || "-";
+                globalDataOperasiTutup[o.tgl] = o.tutup || "-";
             });
-            renderGrafikOperasiHarian();
+            renderGrafikOperasi();
         });
 
-        function renderGrafikOperasiHarian() {
-            let tgls = Object.keys(globalDataOperasi).sort();
-            let vals = tgls.map(t => globalDataOperasi[t]);
-            if(tgls.length === 0) { tgls = [tglHariIni]; vals = [0]; }
+        function updateOtomatisJumlahPelangganOperasi() {
+            let tglPilih = document.getElementById('opTanggal').value;
+            if(!tglPilih) return;
+            let countPelanggan = 0;
+            dataTransaksiGlobal.forEach(t => {
+                if(t.status === "Sukses" && t.waktu.startsWith(tglPilih)) {
+                    countPelanggan += (parseInt(t.qty) || 1);
+                }
+            });
+            document.getElementById('opJmlPelanggan').value = countPelanggan;
+        }
 
-            if(chartOperasiHarianObj) chartOperasiHarianObj.destroy();
-            let ctx = document.getElementById('chartOperasiHarian');
-            if(ctx) {
-                chartOperasiHarianObj = new Chart(ctx.getContext('2d'), {
+        function tarikDataOtomatis() {
+            updateOtomatisJumlahPelangganOperasi();
+            alert("Jumlah pelanggan berhasil ditarik otomatis dari data transaksi Kasir!");
+        }
+
+        function renderGrafikOperasi() {
+            let tgls = Object.keys(globalDataOperasiBuka).sort();
+            let valsBuka = tgls.map(t => globalDataOperasiBuka[t]);
+            let valsTutup = tgls.map(t => globalDataOperasiTutup[t]);
+            if(tgls.length === 0) { tgls = [tglHariIni]; valsBuka = ["-"]; valsTutup = ["-"]; }
+
+            if(chartOpBukaObj) chartOpBukaObj.destroy();
+            let ctxBuka = document.getElementById('chartOperasiBuka');
+            if(ctxBuka) {
+                chartOpBukaObj = new Chart(ctxBuka.getContext('2d'), {
                     type: 'line',
                     data: {
                         labels: tgls,
-                        datasets: [{ label: 'Jumlah Pelanggan', data: vals, borderColor: '#f39c12', backgroundColor: 'rgba(243, 156, 18, 0.1)', tension: 0.3, fill: true }]
+                        datasets: [{ label: 'Jam Buka Toko (per Hari)', data: valsBuka, borderColor: '#27ae60', backgroundColor: 'rgba(39, 174, 96, 0.1)', tension: 0.3, fill: true }]
+                    }
+                });
+            }
+
+            if(chartOpTutupObj) chartOpTutupObj.destroy();
+            let ctxTutup = document.getElementById('chartOperasiTutup');
+            if(ctxTutup) {
+                chartOpTutupObj = new Chart(ctxTutup.getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: tgls,
+                        datasets: [{ label: 'Jam Tutup Toko (per Hari)', data: valsTutup, borderColor: '#e74c3c', backgroundColor: 'rgba(231, 76, 60, 0.1)', tension: 0.3, fill: true }]
                     }
                 });
             }
         }
 
-        let globalDataLaporan = { totTrx: 0, totOmset: 0, totLaba: 0, harianLabels: [], harianValues: [], opLabels: [], opValues: [], pivotMetode: {}, pivotMedia: {}, pivotPelanggan: {} };
+        let globalDataLaporan = { totTrx: 0, totOmset: 0, totLaba: 0, harianLabels: [], harianValues: [], opLabels: [], opBukaVals: [], opTutupVals: [], pivotMetode: {}, pivotMedia: {}, pivotPelanggan: {} };
 
         function muatLaporanBulanan() {
             let blnVal = document.getElementById('lapBulanTahun').value;
@@ -1478,15 +1531,16 @@
             let harianLabels = Object.keys(harianMap).sort();
             let harianValues = harianLabels.map(k => harianMap[k]);
 
-            let opLabels = [], opValues = [];
-            Object.keys(globalDataOperasi).sort().forEach(tgl => {
+            let opLabels = [], opBukaVals = [], opTutupVals = [];
+            Object.keys(globalDataOperasiBuka).sort().forEach(tgl => {
                 if(tgl.startsWith(blnVal)) {
                     opLabels.push(tgl);
-                    opValues.push(globalDataOperasi[tgl]);
+                    opBukaVals.push(globalDataOperasiBuka[tgl]);
+                    opTutupVals.push(globalDataOperasiTutup[tgl]);
                 }
             });
 
-            globalDataLaporan = { totTrx, totOmset, totLaba, harianLabels, harianValues, opLabels, opValues, pivotMetode, pivotMedia, pivotPelanggan };
+            globalDataLaporan = { totTrx, totOmset, totLaba, harianLabels, harianValues, opLabels, opBukaVals, opTutupVals, pivotMetode, pivotMedia, pivotPelanggan };
 
             if(chartLaporanObj) chartLaporanObj.destroy();
             chartLaporanObj = new Chart(document.getElementById('chartLaporanBulanan').getContext('2d'), {
@@ -1497,12 +1551,21 @@
                 }
             });
 
-            if(chartLaporanOperasiObj) chartLaporanOperasiObj.destroy();
-            chartLaporanOperasiObj = new Chart(document.getElementById('chartLaporanOperasiBulanan').getContext('2d'), {
+            if(chartLapBukaObj) chartLapBukaObj.destroy();
+            chartLapBukaObj = new Chart(document.getElementById('chartLaporanBukaBulanan').getContext('2d'), {
                 type: 'line',
                 data: {
                     labels: opLabels.length > 0 ? opLabels : ['-'],
-                    datasets: [{ label: 'Jumlah Pelanggan (Operasi)', data: opValues.length > 0 ? opValues : [0], borderColor: '#f39c12', backgroundColor: 'rgba(243, 156, 18, 0.1)', tension: 0.3, fill: true }]
+                    datasets: [{ label: 'Jam Buka Toko', data: opBukaVals.length > 0 ? opBukaVals : ['-'], borderColor: '#27ae60', backgroundColor: 'rgba(39, 174, 96, 0.1)', tension: 0.3, fill: true }]
+                }
+            });
+
+            if(chartLapTutupObj) chartLapTutupObj.destroy();
+            chartLapTutupObj = new Chart(document.getElementById('chartLaporanTutupBulanan').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: opLabels.length > 0 ? opLabels : ['-'],
+                    datasets: [{ label: 'Jam Tutup Toko', data: opTutupVals.length > 0 ? opTutupVals : ['-'], borderColor: '#e74c3c', backgroundColor: 'rgba(231, 76, 60, 0.1)', tension: 0.3, fill: true }]
                 }
             });
 
@@ -1567,24 +1630,33 @@
                 headStyles: { fillColor: [52, 152, 219] }
             });
 
-            // Menyisipkan Gambar Grafik Omset & Operasi ke PDF
             let finalY = doc.lastAutoTable.finalY + 10;
             let canvasOmset = document.getElementById('chartLaporanBulanan');
             if(canvasOmset) {
                 let imgOmset = canvasOmset.toDataURL("image/png");
                 doc.text("Grafik Omset Harian", 14, finalY);
-                doc.addImage(imgOmset, 'PNG', 14, finalY + 5, 180, 70);
-                finalY += 80;
+                doc.addImage(imgOmset, 'PNG', 14, finalY + 5, 180, 60);
+                finalY += 70;
             }
 
             if(finalY > 220) { doc.addPage(); finalY = 20; }
 
-            let canvasOp = document.getElementById('chartLaporanOperasiBulanan');
-            if(canvasOp) {
-                let imgOp = canvasOp.toDataURL("image/png");
-                doc.text("Grafik Jumlah Pelanggan (Modul Operasi)", 14, finalY);
-                doc.addImage(imgOp, 'PNG', 14, finalY + 5, 180, 70);
-                finalY += 80;
+            let canvasBuka = document.getElementById('chartLaporanBukaBulanan');
+            if(canvasBuka) {
+                let imgBuka = canvasBuka.toDataURL("image/png");
+                doc.text("Grafik Jam Buka Toko (per Hari)", 14, finalY);
+                doc.addImage(imgBuka, 'PNG', 14, finalY + 5, 180, 60);
+                finalY += 70;
+            }
+
+            if(finalY > 220) { doc.addPage(); finalY = 20; }
+
+            let canvasTutup = document.getElementById('chartLaporanTutupBulanan');
+            if(canvasTutup) {
+                let imgTutup = canvasTutup.toDataURL("image/png");
+                doc.text("Grafik Jam Tutup Toko (per Hari)", 14, finalY);
+                doc.addImage(imgTutup, 'PNG', 14, finalY + 5, 180, 60);
+                finalY += 70;
             }
 
             if(finalY > 200) { doc.addPage(); finalY = 20; }
@@ -1666,10 +1738,37 @@
         }
 
         // --- LAINNYA ---
-        document.getElementById('opTanggal').value = tglHariIni; function setHariOtomatis() { const h=["Minggu","Senin","Selasa","Rabu","Kamis","Jumat","Sabtu"]; document.getElementById('opHari').value = h[new Date(document.getElementById('opTanggal').value).getDay()]; } setHariOtomatis();
-        function eksekusiSimpanOperasi() { let tg=document.getElementById('opTanggal').value; db.ref('warung/operasi/'+tg).set({ tgl:tg, hari:document.getElementById('opHari').value, status:document.getElementById('opStatus').value, buka:document.getElementById('opBuka').value||"-", tutup:document.getElementById('opTutup').value||"-", pel:document.getElementById('opJmlPelanggan').value||0 }).then(()=>alert("Disimpan!")); }
-        function editOperasi(t,s,b,tu,p){ document.getElementById('opTanggal').value=t; setHariOtomatis(); document.getElementById('opStatus').value=s; document.getElementById('opBuka').value=b; document.getElementById('opTutup').value=tu; document.getElementById('opJmlPelanggan').value=p; }
+        document.getElementById('opTanggal').value = tglHariIni; 
+        function setHariOtomatis() { 
+            const h=["Minggu","Senin","Selasa","Rabu","Kamis","Jumat","Sabtu"]; 
+            document.getElementById('opHari').value = h[new Date(document.getElementById('opTanggal').value).getDay()]; 
+            updateOtomatisJumlahPelangganOperasi();
+        } 
+        setHariOtomatis();
+
+        function eksekusiSimpanOperasi() { 
+            let tg=document.getElementById('opTanggal').value; 
+            db.ref('warung/operasi/'+tg).set({ 
+                tgl:tg, 
+                hari:document.getElementById('opHari').value, 
+                status:document.getElementById('opStatus').value, 
+                buka:document.getElementById('opBuka').value||"-", 
+                tutup:document.getElementById('opTutup').value||"-", 
+                pel:parseInt(document.getElementById('opJmlPelanggan').value)||0 
+            }).then(()=>alert("Disimpan!")); 
+        }
+
+        function editOperasi(t,s,b,tu,p){ 
+            document.getElementById('opTanggal').value=t; 
+            setHariOtomatis(); 
+            document.getElementById('opStatus').value=s; 
+            document.getElementById('opBuka').value=b; 
+            document.getElementById('opTutup').value=tu; 
+            document.getElementById('opJmlPelanggan').value=p; 
+        }
+
         function hapusOperasi(t){ if(confirm("Hapus?")) db.ref('warung/operasi/'+t).remove(); }
+        
         db.ref('warung/operasi').on('value', snap => { 
             let tOp=document.getElementById('tabelOperasi'); tOp.innerHTML=''; 
             snap.forEach(c=>{
@@ -1749,7 +1848,6 @@
         function hapusPLNonDigital(k){ if(confirm("Hapus?")) db.ref('warung/pricelist/nondigital/'+k).remove(); }
         
         let masterProduk = {}; 
-        let masterProdukByBarcode = {};
         db.ref('warung/pricelist/nondigital').on('value', snap => { 
             let t=document.getElementById('tabelPLNonDigital'), drop=document.getElementById('stokProduk'), dls=document.getElementById('listProdukKasir'); t.innerHTML=''; drop.innerHTML='<option value="">-- Pilih --</option>'; let list=dls.innerHTML; 
             masterProdukByBarcode = {};
@@ -1760,7 +1858,6 @@
                 drop.innerHTML+=`<option value="${d.kode}">[${d.kode}] ${d.nama}</option>`; 
                 list+=`<option value="${d.nama}">`; 
                 if(d.barcode && d.barcode !== "-") {
-                    list+=`<option value="${d.barcode}">`;
                     masterProdukByBarcode[d.barcode] = d.nama;
                     daftarHargaProduk[d.barcode]=parseInt(d.jual||0);
                     daftarTotalAdminProduk[d.barcode]=0;
