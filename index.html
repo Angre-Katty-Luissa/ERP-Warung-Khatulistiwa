@@ -366,7 +366,11 @@
                     <h1>Arus Stok</h1>
                     <button class="btn-scan" onclick="bukaScanner('stok')">📷 Scan Barcode Produk</button>
                     <div class="form-grid">
-                        <div class="form-group"><label>Pilih / Scan Produk</label><select id="stokProduk"><option value="">-- Pilih --</option></select></div>
+                        <div class="form-group"><label>Barcode</label><input type="text" id="stokBarcode" placeholder="Scan barcode..." oninput="cekBarcodeStok()"></div>
+                        <div class="form-group"><label>Nama Produk</label>
+                            <input list="listProdukStok" id="stokNamaProduk" placeholder="Pilih atau ketik produk..." oninput="cekNamaProdukStok()">
+                            <datalist id="listProdukStok"></datalist>
+                        </div>
                         <div class="form-group"><label>Waktu</label><input type="datetime-local" id="stokWaktu"></div>
                         <div class="form-group"><label>Jenis</label><select id="stokJenis"><option>Masuk</option><option>Keluar</option></select></div>
                         <div class="form-group"><label>Qty</label><input type="number" id="stokQty" value="1"></div>
@@ -375,7 +379,7 @@
                     <button class="btn-submit" onclick="konfirmasiSimpan('stok')">Catat Stok</button>
                     <div class="export-container"><button class="btn-excel" onclick="eksporData('stok', 'excel')">📊 Excel</button><button class="btn-pdf" onclick="eksporData('stok', 'pdf')">📄 PDF</button></div>
                     <h2>Log Arus Stok</h2>
-                    <div class="table-responsive"><table><thead><tr><th>Waktu</th><th>Kode</th><th>Nama</th><th>Jenis</th><th>Qty</th><th>Ket</th><th>Aksi</th></tr></thead><tbody id="tabelStokLog"></tbody></table></div>
+                    <div class="table-responsive"><table><thead><tr><th>Waktu</th><th>Barcode</th><th>Kode/Nama</th><th>Jenis</th><th>Qty</th><th>Ket</th><th>Aksi</th></tr></thead><tbody id="tabelStokLog"></tbody></table></div>
                     <h2>Sisa Stok Tersedia</h2>
                     <div class="table-responsive"><table><thead><tr><th>Kode</th><th>Nama</th><th>Sisa</th></tr></thead><tbody id="tabelStokTotal"></tbody></table></div>
                 </div>
@@ -560,7 +564,8 @@
                         <h2>Catat Daftar Belanja Warung</h2>
                         <div class="form-grid">
                             <div class="form-group"><label>Tanggal</label><input type="date" id="belanjaTanggal"></div>
-                            <div class="form-group"><label>Nama Barang / Barcode</label><input type="text" id="belanjaNama" placeholder="Scan atau ketik nama barang..."></div>
+                            <div class="form-group"><label>Barcode</label><input type="text" id="belanjaBarcode" placeholder="Scan barcode..."></div>
+                            <div class="form-group"><label>Nama Barang</label><input type="text" id="belanjaNama" placeholder="Ketik nama barang..."></div>
                             <div class="form-group"><label>Qty / Jumlah</label><input type="number" id="belanjaQty" value="1"></div>
                             <div class="form-group"><label>Estimasi Biaya (Rp)</label><input type="number" id="belanjaBiaya" placeholder="0"></div>
                             <div class="form-group"><label>Keterangan / Supplier</label><input type="text" id="belanjaKet" placeholder="Toko / Pasar / Supplier"></div>
@@ -579,6 +584,7 @@
                             <thead>
                                 <tr>
                                     <th>Tanggal</th>
+                                    <th>Barcode</th>
                                     <th>Nama Barang</th>
                                     <th>Qty</th>
                                     <th>Estimasi Biaya</th>
@@ -587,7 +593,7 @@
                                 </tr>
                             </thead>
                             <tbody id="tabelBelanja">
-                                <tr><td colspan="6" style="text-align:center;">Belum ada daftar belanja</td></tr>
+                                <tr><td colspan="7" style="text-align:center;">Belum ada daftar belanja</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -737,15 +743,10 @@
             } else if(activeScannerModule === 'pricelist') {
                 document.getElementById('plNonBarcode').value = kode;
             } else if(activeScannerModule === 'stok') {
-                let select = document.getElementById('stokProduk');
-                for(let opt of select.options) {
-                    if(opt.value === kode || opt.text.includes(kode)) {
-                        select.value = opt.value;
-                        break;
-                    }
-                }
+                document.getElementById('stokBarcode').value = kode;
+                cekBarcodeStok();
             } else if(activeScannerModule === 'belanja') {
-                document.getElementById('belanjaNama').value = kode;
+                document.getElementById('belanjaBarcode').value = kode;
             }
         }
 
@@ -811,7 +812,8 @@
                 document.getElementById('plNonLabaRp').value = '';
                 document.getElementById('plNonSupplier').value = '';
             } else if(modul === 'stok') {
-                document.getElementById('stokProduk').value = '';
+                document.getElementById('stokBarcode').value = '';
+                document.getElementById('stokNamaProduk').value = '';
                 document.getElementById('stokQty').value = '1';
                 document.getElementById('stokKet').value = '';
             } else if(modul === 'pengeluaran') {
@@ -822,6 +824,7 @@
                 document.getElementById('pribadiNominal').value = '';
                 document.getElementById('pribadiOtherInput').value = '';
             } else if(modul === 'belanja') {
+                document.getElementById('belanjaBarcode').value = '';
                 document.getElementById('belanjaNama').value = '';
                 document.getElementById('belanjaQty').value = '1';
                 document.getElementById('belanjaBiaya').value = '';
@@ -878,7 +881,7 @@
             document.getElementById('trxSubtotal').value = ((n * qty) + ta - d) > 0 ? ((n * qty) + ta - d) : 0;
         }
 
-        let daftarHargaProduk = {}, daftarTotalAdminProduk = {}, daftarLabaProduk = {}, daftarKategoriProduk = {};
+        let daftarHargaProduk = {}, daftarTotalAdminProduk = {}, daftarLabaProduk = {}, daftarKategoriProduk = {}, masterProdukByBarcode = {};
         
         function cekBarcodeKasir() {
             let bc = document.getElementById('trxBarcode').value.trim();
@@ -988,10 +991,11 @@
                 let uniqueId = no + (keranjangBelanja.length > 1 ? "-" + (index + 1) : "");
                 
                 let labaItem = 0;
+                let feeModul4 = daftarLabaProduk[item.nama] !== undefined ? daftarLabaProduk[item.nama] : 0;
                 if(item.kategori === 'digital') {
-                    labaItem = item.subtotal - item.diskon - item.fee_warung;
+                    labaItem = item.subtotal - item.diskon - feeModul4;
                 } else {
-                    labaItem = (item.laba_fisik * item.qty) - item.diskon;
+                    labaItem = (feeModul4 * item.qty) - item.diskon;
                 }
                 if (labaItem < 0) labaItem = 0;
 
@@ -1262,6 +1266,7 @@
 
         function eksekusiSimpanBelanja() {
             let tgl = document.getElementById('belanjaTanggal').value;
+            let barcode = document.getElementById('belanjaBarcode').value.trim() || '-';
             let nama = document.getElementById('belanjaNama').value.trim();
             let qty = parseInt(document.getElementById('belanjaQty').value) || 1;
             let biaya = parseInt(document.getElementById('belanjaBiaya').value) || 0;
@@ -1269,7 +1274,7 @@
 
             if(!tgl || !nama) return alert("Tanggal dan nama barang harus diisi!");
             let id = "BLJ-" + new Date().getTime();
-            let dataBlj = { id: id, tanggal: tgl, nama: nama, qty: qty, biaya: biaya, keterangan: ket };
+            let dataBlj = { id: id, tanggal: tgl, barcode: barcode, nama: nama, qty: qty, biaya: biaya, keterangan: ket };
 
             db.ref('warung/belanja/' + id).set(dataBlj).then(() => {
                 alert("Daftar belanja berhasil disimpan!");
@@ -1281,6 +1286,7 @@
                 let b = snap.val();
                 if(b) {
                     document.getElementById('belanjaTanggal').value = b.tanggal;
+                    document.getElementById('belanjaBarcode').value = b.barcode !== '-' ? b.barcode : '';
                     document.getElementById('belanjaNama').value = b.nama;
                     document.getElementById('belanjaQty').value = b.qty;
                     document.getElementById('belanjaBiaya').value = b.biaya;
@@ -1302,6 +1308,7 @@
             [...arr].reverse().forEach(b => {
                 tbody.innerHTML += `<tr>
                     <td>${b.tanggal}</td>
+                    <td>${b.barcode || '-'}</td>
                     <td>${b.nama}</td>
                     <td>${b.qty}</td>
                     <td>Rp ${parseInt(b.biaya || 0).toLocaleString()}</td>
@@ -1315,7 +1322,7 @@
                 </tr>`;
             });
             if(arr.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">Belum ada daftar belanja</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">Belum ada daftar belanja</td></tr>`;
             }
         });
 
@@ -1356,7 +1363,17 @@
                 if(t.status === "Sukses") { 
                     trxT++; 
                     omsetT += t.total_bayar; 
-                    labaT += (t.laba || 0);
+                    
+                    // Hitung estimasi laba merujuk pada Price List Modul 4 (daftarLabaProduk) berdasarkan nama produk/transaksi
+                    let feeModul4 = daftarLabaProduk[t.nama] !== undefined ? daftarLabaProduk[t.nama] : (t.laba || 0);
+                    let itemLaba = 0;
+                    if(t.kategori === 'digital') {
+                        itemLaba = t.total_bayar - (t.diskon || 0) - feeModul4;
+                    } else {
+                        itemLaba = (feeModul4 * (t.qty || 1)) - (t.diskon || 0);
+                    }
+                    if(itemLaba < 0) itemLaba = 0;
+                    labaT += itemLaba;
 
                     let d = t.waktu.split('T')[0]; 
                     dataChart[d] = (dataChart[d]||0) + t.total_bayar; 
@@ -1699,6 +1716,22 @@
                 headStyles: { fillColor: [155, 89, 182] }
             });
 
+            // Penambahan Pivot Pelanggan pada cetak PDF Laporan Bulanan (Permintaan C)
+            finalY = doc.lastAutoTable.finalY + 10;
+            if(finalY > 200) { doc.addPage(); finalY = 20; }
+            doc.text("Pivot Pelanggan", 14, finalY);
+            let rowsPelanggan = [];
+            for(let k in globalDataLaporan.pivotPelanggan) {
+                rowsPelanggan.push([k, globalDataLaporan.pivotPelanggan[k].qty, "Rp " + globalDataLaporan.pivotPelanggan[k].sum.toLocaleString()]);
+            }
+            doc.autoTable({
+                startY: finalY + 5,
+                head: [['Pelanggan', 'Satuan', 'Rupiah']],
+                body: rowsPelanggan,
+                theme: 'grid',
+                headStyles: { fillColor: [52, 152, 219] }
+            });
+
             doc.save(`Laporan-Bulanan-${blnVal}.pdf`);
         }
 
@@ -1716,9 +1749,9 @@
                 if(modul === 'operasi') return { "Tanggal": obj.tgl, "Hari": obj.hari, "Status": obj.status, "Buka": obj.buka, "Tutup": obj.tutup, "Jml Pelanggan": obj.pel };
                 if(modul === 'pl_digital') return { "Kode": obj.kode, "Nama Produk": obj.nama, "Jenis": obj.jenis, "Nominal (Rp)": obj.nominal, "Admin App": obj.adminApp, "Admin Bank": obj.adminBank, "Fee Warung": obj.fee, "Total Admin": obj.total };
                 if(modul === 'pl_nondigital') return { "Barcode": obj.barcode || "-", "Kode": obj.kode, "Nama Produk": obj.nama, "Jenis": obj.jenis, "Beli (Rp)": obj.beli, "Jual (Rp)": obj.jual, "Laba (Rp)": obj.laba, "Supplier": obj.supplier };
-                if(modul === 'stok') return { "Waktu": (obj.waktu || "").replace('T',' '), "Kode": obj.kode, "Nama Produk": obj.nama, "Jenis Arus": obj.jenis, "Qty": obj.qty, "Keterangan": obj.ket };
+                if(modul === 'stok') return { "Waktu": (obj.waktu || "").replace('T',' '), "Barcode": obj.barcode || "-", "Kode/Nama": obj.nama, "Jenis Arus": obj.jenis, "Qty": obj.qty, "Keterangan": obj.ket };
                 if(modul === 'pengeluaran') return { "Waktu": (obj.waktu || "").replace('T',' '), "Kategori": obj.kat, "Nominal (Rp)": obj.nom, "Keterangan": obj.ket };
-                if(modul === 'belanja') return { "Tanggal": obj.tanggal, "Nama Barang": obj.nama, "Qty": obj.qty, "Estimasi Biaya (Rp)": obj.biaya, "Keterangan": obj.keterangan };
+                if(modul === 'belanja') return { "Tanggal": obj.tanggal, "Barcode": obj.barcode || "-", "Nama Barang": obj.nama, "Qty": obj.qty, "Estimasi Biaya (Rp)": obj.biaya, "Keterangan": obj.keterangan };
                 return obj;
             });
         }
@@ -1726,9 +1759,36 @@
         function eksporData(modul, format) {
             if(modul === 'filter') {
                 if(globalDataFilter.length===0) return alert("Data kosong");
-                prosesEksporFile(getMappedData(modul, globalDataFilter), "Data_Filter", format);
+                
+                let totalQtyFlt = 0, totalNominalFlt = 0, totalAdminFlt = 0, totalDiskonFlt = 0, totalBayarFlt = 0;
+                globalDataFilter.forEach(t => {
+                    if(t.status === "Sukses") {
+                        totalQtyFlt += (t.qty || 1);
+                        totalNominalFlt += (t.nominal || 0) * (t.qty || 1);
+                        totalAdminFlt += (t.total_admin || 0);
+                        totalDiskonFlt += (t.diskon || 0);
+                        totalBayarFlt += (t.total_bayar || 0);
+                    }
+                });
+
+                let mappedData = getMappedData(modul, globalDataFilter);
+                // Tambahkan baris total keseluruhan sesuai permintaan B
+                mappedData.push({
+                    "No Trx": "TOTAL KESELURUHAN", "Tanggal & Waktu": "", "Nama Transaksi": "", "Pelanggan": "",
+                    "Media": "", "Metode": "", "Qty": totalQtyFlt, "Nominal (Rp)": totalNominalFlt,
+                    "Total Admin (Rp)": totalAdminFlt, "Diskon (Rp)": totalDiskonFlt, "Total Bayar (Rp)": totalBayarFlt, "Status": ""
+                });
+
+                prosesEksporFile(mappedData, "Data_Filter", format);
                 return;
             }
+
+            if(modul === 'transaksi') {
+                if(dataTransaksiGlobal.length===0) return alert("Data Kosong");
+                prosesEksporFile(getMappedData(modul, dataTransaksiGlobal), modul.toUpperCase(), format);
+                return;
+            }
+
             let path = modul.startsWith('pl') ? 'pricelist/' + modul.replace('pl_', '') : (modul === 'stok' ? 'stok_log' : modul);
             db.ref('warung/' + path).once('value').then(snap => {
                 let arr = []; snap.forEach(c => arr.push(c.val()));
@@ -1859,17 +1919,29 @@
         function hapusPLNonDigital(k){ if(confirm("Hapus?")) db.ref('warung/pricelist/nondigital/'+k).remove(); }
         
         let masterProduk = {}; 
+        let masterProdukByBarcodeStok = {};
+        
+        function cekBarcodeStok() {
+            let bc = document.getElementById('stokBarcode').value.trim();
+            if(masterProdukByBarcodeStok[bc]) {
+                document.getElementById('stokNamaProduk').value = masterProdukByBarcodeStok[bc];
+            }
+        }
+        function cekNamaProdukStok() {}
+
         db.ref('warung/pricelist/nondigital').on('value', snap => { 
-            let t=document.getElementById('tabelPLNonDigital'), drop=document.getElementById('stokProduk'), dls=document.getElementById('listProdukKasir'); t.innerHTML=''; drop.innerHTML='<option value="">-- Pilih --</option>'; let list=dls.innerHTML; 
+            let t=document.getElementById('tabelPLNonDigital'), dls=document.getElementById('listProdukKasir'), dlsStok=document.getElementById('listProdukStok'); t.innerHTML=''; let list=dls.innerHTML; let listStok='';
             masterProdukByBarcode = {};
+            masterProdukByBarcodeStok = {};
             snap.forEach(c=>{ 
                 let d=c.val(); 
                 masterProduk[d.kode]=d.nama; 
                 t.innerHTML+=`<tr><td>${d.barcode||'-'}</td><td>${d.kode}</td><td>${d.nama}</td><td>${d.jenis}</td><td>Rp ${parseInt(d.beli||0).toLocaleString()}</td><td>Rp ${parseInt(d.jual||0).toLocaleString()}</td><td>Rp ${parseInt(d.laba||0).toLocaleString()}</td><td>${d.supplier||'-'}</td><td><div class="btn-action-container"><button class="btn-edit" onclick="editPLNonDigital('${d.kode}')">Edit</button> <button class="btn-del" onclick="hapusPLNonDigital('${d.kode}')">Del</button></div></td></tr>`; 
-                drop.innerHTML+=`<option value="${d.kode}">[${d.kode}] ${d.nama}</option>`; 
                 list+=`<option value="${d.nama}">`; 
+                listStok+=`<option value="${d.nama}">`; 
                 if(d.barcode && d.barcode !== "-") {
                     masterProdukByBarcode[d.barcode] = d.nama;
+                    masterProdukByBarcodeStok[d.barcode] = d.nama;
                     daftarHargaProduk[d.barcode]=parseInt(d.jual||0);
                     daftarTotalAdminProduk[d.barcode]=0;
                     daftarLabaProduk[d.barcode]=parseInt(d.laba||0);
@@ -1885,15 +1957,46 @@
                 daftarKategoriProduk[d.kode] = 'nondigital';
             }); 
             dls.innerHTML=list; 
+            if(dlsStok) dlsStok.innerHTML = listStok;
         });
 
         document.getElementById('stokWaktu').value = WaktuLokal();
-        function eksekusiSimpanLogStok() { let k=document.getElementById('stokProduk').value, q=parseInt(document.getElementById('stokQty').value)||0, j=document.getElementById('stokJenis').value, i="LOG-"+new Date().getTime(); if(!k||q<=0)return; db.ref('warung/stok_log/'+i).set({ id:i, waktu:document.getElementById('stokWaktu').value, kode:k, nama:masterProduk[k]||k, jenis:j, qty:q, ket:document.getElementById('stokKet').value||'-' }).then(()=>{ db.ref('warung/stok_total/'+k).once('value').then(sn=>{ let s=sn.exists()?sn.val().jumlah:0; db.ref('warung/stok_total/'+k).set({kode:k,nama:masterProduk[k]||k,jumlah:j==="Masuk"?s+q:s-q}).then(()=>alert("Stok update"));}); }); }
+        function eksekusiSimpanLogStok() { 
+            let barcode = document.getElementById('stokBarcode').value.trim() || '-';
+            let nama = document.getElementById('stokNamaProduk').value.trim();
+            let q = parseInt(document.getElementById('stokQty').value)||0; 
+            let j = document.getElementById('stokJenis').value; 
+            let i = "LOG-"+new Date().getTime(); 
+            if(!nama || q<=0) return alert("Nama produk dan Qty harus diisi!");
+            
+            let k = nama;
+            db.ref('warung/stok_log/'+i).set({ 
+                id: i, 
+                waktu: document.getElementById('stokWaktu').value, 
+                barcode: barcode,
+                kode: k, 
+                nama: nama, 
+                jenis: j, 
+                qty: q, 
+                ket: document.getElementById('stokKet').value||'-' 
+            }).then(()=>{ 
+                db.ref('warung/stok_total/'+k).once('value').then(sn=>{ 
+                    let s = sn.exists() ? sn.val().jumlah : 0; 
+                    db.ref('warung/stok_total/'+k).set({
+                        kode: k,
+                        nama: nama,
+                        jumlah: j==="Masuk" ? s+q : s-q
+                    }).then(()=>alert("Stok update"));
+                }); 
+            }); 
+        }
+
         function editLogStok(i,k,j,q) {
             db.ref('warung/stok_log/' + i).once('value').then(snap => {
                 let l = snap.val();
                 if(l) {
-                    document.getElementById('stokProduk').value = l.kode;
+                    document.getElementById('stokBarcode').value = l.barcode !== '-' ? l.barcode : '';
+                    document.getElementById('stokNamaProduk').value = l.nama;
                     document.getElementById('stokWaktu').value = l.waktu;
                     document.getElementById('stokJenis').value = l.jenis;
                     document.getElementById('stokQty').value = l.qty;
@@ -1906,14 +2009,16 @@
                 }
             });
         }
+
         function hapusLogStok(i,k,j,q) { if(confirm("Hapus?")){db.ref('warung/stok_total/'+k).once('value').then(sn=>{let s=sn.exists()?sn.val().jumlah:0; db.ref('warung/stok_total/'+k).update({jumlah:j==="Masuk"?s-q:s+q}); db.ref('warung/stok_log/'+i).remove();});} }
+        
         db.ref('warung/stok_log').on('value', snap=>{
             let t=document.getElementById('tabelStokLog'); t.innerHTML=''; 
             snap.forEach(c=>{
                 let l=c.val(); 
                 t.innerHTML+=`<tr>
                     <td>${l.waktu.replace('T',' ')}</td>
-                    <td>${l.kode}</td>
+                    <td>${l.barcode || '-'}</td>
                     <td>${l.nama}</td>
                     <td>${l.jenis}</td>
                     <td>${l.qty}</td>
@@ -1927,6 +2032,7 @@
                 </tr>`;
             });
         });
+
         db.ref('warung/stok_total').on('value', snap=>{let t=document.getElementById('tabelStokTotal'), c=0, a=''; t.innerHTML=''; snap.forEach(ch=>{let s=ch.val(); t.innerHTML+=`<tr><td>${s.kode}</td><td>${s.nama}</td><td style="${s.jumlah<=5?'color:red':'color:green'}; font-weight:bold">${s.jumlah}</td></tr>`; if(s.jumlah<=5){c++; a+=`<li>[${s.kode}] ${s.nama} - sisa ${s.jumlah}</li>`;}}); document.getElementById('dashStokAlert').innerText=c; document.getElementById('dashStokList').innerHTML=c>0?a:'<li style="color:green">Aman</li>';});
 
         document.getElementById('pengWaktu').value = WaktuLokal(); let totalPengG=0, dataPengeluaranGlobal=[];
