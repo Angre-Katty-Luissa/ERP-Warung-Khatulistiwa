@@ -104,7 +104,6 @@
 
         .footer-copyright { text-align: center; margin-top: 30px; padding: 12px 0; font-size: 12px; color: #7f8c8d; border-top: 1px solid #e2e8f0; background: transparent; }
 
-        /* Scanner Modal / Box Styling */
         #scanner-container { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); z-index: 10000; justify-content: center; align-items: center; flex-direction: column; }
         .scanner-box { background: white; padding: 15px; border-radius: 8px; width: 90%; max-width: 400px; text-align: center; }
 
@@ -132,7 +131,6 @@
 </head>
 <body>
 
-    <!-- Scanner Container Modal -->
     <div id="scanner-container">
         <div class="scanner-box">
             <h3 style="margin-top:0;">📷 Scan Barcode Produk</h3>
@@ -204,6 +202,7 @@
                 <!-- 2. KASIR & TRANSAKSI -->
                 <div id="transaksi" class="page">
                     <h1>Form Kasir (Multi-Item)</h1>
+                    <button class="btn-scan" onclick="bukaScanner('kasir')">📷 Scan Barcode Produk</button>
                     <div class="form-grid">
                         <div class="form-group"><label>No TRX</label><input type="text" id="trxNo" readonly></div>
                         <div class="form-group"><label>Tanggal & Waktu</label><input type="datetime-local" id="trxTanggal"></div>
@@ -310,6 +309,12 @@
                     </div>
                     <button class="btn-submit" onclick="konfirmasiSimpan('operasi')">Simpan Operasional</button>
                     <div class="export-container"><button class="btn-excel" onclick="eksporData('operasi', 'excel')">📊 Excel</button><button class="btn-pdf" onclick="eksporData('operasi', 'pdf')">📄 PDF</button></div>
+                    
+                    <div class="chart-container" style="margin-top:15px;">
+                        <h2>📈 Grafik Jumlah Pelanggan Harian (Modul Operasi)</h2>
+                        <canvas id="chartOperasiHarian"></canvas>
+                    </div>
+
                     <div class="table-responsive"><table><thead><tr><th>Tanggal</th><th>Hari</th><th>Status</th><th>Buka-Tutup</th><th>Pelanggan</th><th>Aksi</th></tr></thead><tbody id="tabelOperasi"></tbody></table></div>
                 </div>
 
@@ -605,6 +610,11 @@
                         <canvas id="chartLaporanBulanan"></canvas>
                     </div>
 
+                    <div class="chart-container" style="margin-top: 15px;">
+                        <h2>📈 Grafik Jumlah Pelanggan Harian (Modul Operasi)</h2>
+                        <canvas id="chartLaporanOperasiBulanan"></canvas>
+                    </div>
+
                     <div id="lapPivotSummary" style="margin-top: 15px;"></div>
 
                     <div class="export-container" style="margin-top: 15px;">
@@ -813,7 +823,7 @@
             return nd.toISOString().slice(0,16);
         }
 
-        let myChartMingguan = null, myChartBulanan = null, myChartTahunan = null, chartFilterObj = null, chartLaporanObj = null;
+        let myChartMingguan = null, myChartBulanan = null, myChartTahunan = null, chartFilterObj = null, chartLaporanObj = null, chartOperasiHarianObj = null, chartLaporanOperasiObj = null;
         function inisialisasiChart(dataMingguan, dataBulanan, dataTahunan) {
             if(myChartMingguan) myChartMingguan.destroy();
             myChartMingguan = new Chart(document.getElementById('chartMingguan').getContext('2d'), { type: 'line', data: { labels: dataMingguan.labels, datasets: [{ label: 'Omset Mingguan (Rp)', data: dataMingguan.values, borderColor: '#3498db', backgroundColor: 'rgba(52, 152, 219, 0.1)', tension: 0.3, fill: true }] } });
@@ -853,20 +863,27 @@
         }
 
         function tambahItemKeKeranjang() {
-            let nama = document.getElementById('trxNama').value.trim();
-            if(!nama) return alert("Nama produk/transaksi harus diisi!");
+            let valInput = document.getElementById('trxNama').value.trim();
+            if(!valInput) return alert("Nama produk/transaksi harus diisi!");
             
+            let namaFinal = valInput;
+            if(daftarHargaProduk[valInput] !== undefined) {
+                if(masterProdukByBarcode && masterProdukByBarcode[valInput]) {
+                    namaFinal = masterProdukByBarcode[valInput];
+                }
+            }
+
             let qty = parseInt(document.getElementById('trxQty').value) || 1;
             let nominal = parseInt(document.getElementById('trxNominal').value) || 0;
             let total_admin = parseInt(document.getElementById('trxTotalAdmin').value) || 0;
             let diskon = parseInt(document.getElementById('trxDiskon').value) || 0;
             let subtotal = parseInt(document.getElementById('trxSubtotal').value) || 0;
-            let kategori = daftarKategoriProduk[nama] || "digital"; 
-            let feeWarung = daftarLabaProduk[nama] || 0; 
-            let labaFisik = daftarLabaProduk[nama] || 0; 
+            let kategori = daftarKategoriProduk[valInput] || daftarKategoriProduk[namaFinal] || "digital"; 
+            let feeWarung = daftarLabaProduk[valInput] || daftarLabaProduk[namaFinal] || 0; 
+            let labaFisik = daftarLabaProduk[valInput] || daftarLabaProduk[namaFinal] || 0; 
 
             let item = {
-                nama: nama,
+                nama: namaFinal,
                 qty: qty,
                 nominal: nominal,
                 total_admin: total_admin,
@@ -1389,8 +1406,36 @@
             eksekusiFilter(); document.getElementById('hasilFilterDiv').style.display = 'none';
         }
 
-        // === MODUL 12: LAPORAN BULANAN ===
-        let globalDataLaporan = { totTrx: 0, totOmset: 0, totLaba: 0, harianLabels: [], harianValues: [], pivotMetode: {}, pivotMedia: {}, pivotPelanggan: {} };
+        // === MODUL 3 & 12: OPERASI & LAPORAN BULANAN ===
+        let globalDataOperasi = {};
+        db.ref('warung/operasi').on('value', snap => {
+            globalDataOperasi = {};
+            snap.forEach(c => {
+                let o = c.val();
+                globalDataOperasi[o.tgl] = parseInt(o.pel || 0);
+            });
+            renderGrafikOperasiHarian();
+        });
+
+        function renderGrafikOperasiHarian() {
+            let tgls = Object.keys(globalDataOperasi).sort();
+            let vals = tgls.map(t => globalDataOperasi[t]);
+            if(tgls.length === 0) { tgls = [tglHariIni]; vals = [0]; }
+
+            if(chartOperasiHarianObj) chartOperasiHarianObj.destroy();
+            let ctx = document.getElementById('chartOperasiHarian');
+            if(ctx) {
+                chartOperasiHarianObj = new Chart(ctx.getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: tgls,
+                        datasets: [{ label: 'Jumlah Pelanggan', data: vals, borderColor: '#f39c12', backgroundColor: 'rgba(243, 156, 18, 0.1)', tension: 0.3, fill: true }]
+                    }
+                });
+            }
+        }
+
+        let globalDataLaporan = { totTrx: 0, totOmset: 0, totLaba: 0, harianLabels: [], harianValues: [], opLabels: [], opValues: [], pivotMetode: {}, pivotMedia: {}, pivotPelanggan: {} };
 
         function muatLaporanBulanan() {
             let blnVal = document.getElementById('lapBulanTahun').value;
@@ -1401,7 +1446,6 @@
             let totTrx = 0, totOmset = 0, totLaba = 0;
             let harianMap = {};
             
-            // Mencakup seluruh kategori yang tertera di modul Kasir / Form
             let pivotMetode = { "Cash": {qty:0, sum:0}, "QRIS": {qty:0, sum:0}, "Transfer": {qty:0, sum:0} };
             let pivotMedia = { "Warung": {qty:0, sum:0}, "Agen Mandiri": {qty:0, sum:0}, "Gopay": {qty:0, sum:0}, "Tokopedia": {qty:0, sum:0}, "Wondr": {qty:0, sum:0} };
             let pivotPelanggan = { "Umum": {qty:0, sum:0}, "Keluarga": {qty:0, sum:0}, "Pribadi": {qty:0, sum:0} };
@@ -1431,14 +1475,34 @@
             document.getElementById('lapTotOmset').innerText = 'Rp ' + totOmset.toLocaleString();
             document.getElementById('lapTotLaba').innerText = 'Rp ' + totLaba.toLocaleString();
 
-            globalDataLaporan = { totTrx, totOmset, totLaba, harianLabels: Object.keys(harianMap).sort(), harianValues: Object.keys(harianMap).sort().map(k => harianMap[k]), pivotMetode, pivotMedia, pivotPelanggan };
+            let harianLabels = Object.keys(harianMap).sort();
+            let harianValues = harianLabels.map(k => harianMap[k]);
+
+            let opLabels = [], opValues = [];
+            Object.keys(globalDataOperasi).sort().forEach(tgl => {
+                if(tgl.startsWith(blnVal)) {
+                    opLabels.push(tgl);
+                    opValues.push(globalDataOperasi[tgl]);
+                }
+            });
+
+            globalDataLaporan = { totTrx, totOmset, totLaba, harianLabels, harianValues, opLabels, opValues, pivotMetode, pivotMedia, pivotPelanggan };
 
             if(chartLaporanObj) chartLaporanObj.destroy();
             chartLaporanObj = new Chart(document.getElementById('chartLaporanBulanan').getContext('2d'), {
                 type: 'line',
                 data: {
-                    labels: globalDataLaporan.harianLabels,
-                    datasets: [{ label: 'Omset Harian (Rp)', data: globalDataLaporan.harianValues, borderColor: '#27ae60', backgroundColor: 'rgba(39, 174, 96, 0.1)', tension: 0.3, fill: true }]
+                    labels: harianLabels,
+                    datasets: [{ label: 'Omset Harian (Rp)', data: harianValues, borderColor: '#27ae60', backgroundColor: 'rgba(39, 174, 96, 0.1)', tension: 0.3, fill: true }]
+                }
+            });
+
+            if(chartLaporanOperasiObj) chartLaporanOperasiObj.destroy();
+            chartLaporanOperasiObj = new Chart(document.getElementById('chartLaporanOperasiBulanan').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: opLabels.length > 0 ? opLabels : ['-'],
+                    datasets: [{ label: 'Jumlah Pelanggan (Operasi)', data: opValues.length > 0 ? opValues : [0], borderColor: '#f39c12', backgroundColor: 'rgba(243, 156, 18, 0.1)', tension: 0.3, fill: true }]
                 }
             });
 
@@ -1503,7 +1567,28 @@
                 headStyles: { fillColor: [52, 152, 219] }
             });
 
+            // Menyisipkan Gambar Grafik Omset & Operasi ke PDF
             let finalY = doc.lastAutoTable.finalY + 10;
+            let canvasOmset = document.getElementById('chartLaporanBulanan');
+            if(canvasOmset) {
+                let imgOmset = canvasOmset.toDataURL("image/png");
+                doc.text("Grafik Omset Harian", 14, finalY);
+                doc.addImage(imgOmset, 'PNG', 14, finalY + 5, 180, 70);
+                finalY += 80;
+            }
+
+            if(finalY > 220) { doc.addPage(); finalY = 20; }
+
+            let canvasOp = document.getElementById('chartLaporanOperasiBulanan');
+            if(canvasOp) {
+                let imgOp = canvasOp.toDataURL("image/png");
+                doc.text("Grafik Jumlah Pelanggan (Modul Operasi)", 14, finalY);
+                doc.addImage(imgOp, 'PNG', 14, finalY + 5, 180, 70);
+                finalY += 80;
+            }
+
+            if(finalY > 200) { doc.addPage(); finalY = 20; }
+
             doc.text("Pivot Metode Pembayaran", 14, finalY);
             let rowsMetode = [];
             for(let k in globalDataLaporan.pivotMetode) {
@@ -1662,8 +1747,12 @@
             });
         }
         function hapusPLNonDigital(k){ if(confirm("Hapus?")) db.ref('warung/pricelist/nondigital/'+k).remove(); }
-        let masterProduk = {}; db.ref('warung/pricelist/nondigital').on('value', snap => { 
+        
+        let masterProduk = {}; 
+        let masterProdukByBarcode = {};
+        db.ref('warung/pricelist/nondigital').on('value', snap => { 
             let t=document.getElementById('tabelPLNonDigital'), drop=document.getElementById('stokProduk'), dls=document.getElementById('listProdukKasir'); t.innerHTML=''; drop.innerHTML='<option value="">-- Pilih --</option>'; let list=dls.innerHTML; 
+            masterProdukByBarcode = {};
             snap.forEach(c=>{ 
                 let d=c.val(); 
                 masterProduk[d.kode]=d.nama; 
@@ -1672,6 +1761,7 @@
                 list+=`<option value="${d.nama}">`; 
                 if(d.barcode && d.barcode !== "-") {
                     list+=`<option value="${d.barcode}">`;
+                    masterProdukByBarcode[d.barcode] = d.nama;
                     daftarHargaProduk[d.barcode]=parseInt(d.jual||0);
                     daftarTotalAdminProduk[d.barcode]=0;
                     daftarLabaProduk[d.barcode]=parseInt(d.laba||0);
