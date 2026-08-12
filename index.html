@@ -751,14 +751,30 @@
 
         function konfirmasiSimpan(modul) {
             if (confirm("Apakah Anda yakin ingin menyimpan data ini?")) {
-                if (modul === 'transaksi') eksekusiSimpanTransaksi();
-                else if (modul === 'operasi') eksekusiSimpanOperasi();
-                else if (modul === 'pl_digital') eksekusiSimpanPLDigital();
-                else if (modul === 'pl_nondigital') eksekusiSimpanPLNonDigital();
-                else if (modul === 'stok') eksekusiSimpanLogStok();
-                else if (modul === 'pengeluaran') eksekusiSimpanPengeluaran();
-                else if (modul === 'pribadi') eksekusiSimpanPribadi();
-                else if (modul === 'belanja') eksekusiSimpanBelanja();
+                if (modul === 'transaksi') {
+                    eksekusiSimpanTransaksi();
+                } else if (modul === 'operasi') {
+                    eksekusiSimpanOperasi();
+                    resetFormModul('operasi');
+                } else if (modul === 'pl_digital') {
+                    eksekusiSimpanPLDigital();
+                    resetFormModul('pl_digital');
+                } else if (modul === 'pl_nondigital') {
+                    eksekusiSimpanPLNonDigital();
+                    resetFormModul('pl_nondigital');
+                } else if (modul === 'stok') {
+                    eksekusiSimpanLogStok();
+                    resetFormModul('stok');
+                } else if (modul === 'pengeluaran') {
+                    eksekusiSimpanPengeluaran();
+                    resetFormModul('pengeluaran');
+                } else if (modul === 'pribadi') {
+                    eksekusiSimpanPribadi();
+                    resetFormModul('pribadi');
+                } else if (modul === 'belanja') {
+                    eksekusiSimpanBelanja();
+                    resetFormModul('belanja');
+                }
             } else {
                 resetFormModul(modul);
             }
@@ -862,7 +878,7 @@
             document.getElementById('trxSubtotal').value = ((n * qty) + ta - d) > 0 ? ((n * qty) + ta - d) : 0;
         }
 
-        let daftarHargaProduk = {}, daftarTotalAdminProduk = {}, daftarLabaProduk = {}, daftarKategoriProduk = {}, masterProdukByBarcode = {};
+        let daftarHargaProduk = {}, daftarTotalAdminProduk = {}, daftarLabaProduk = {}, daftarKategoriProduk = {};
         
         function cekBarcodeKasir() {
             let bc = document.getElementById('trxBarcode').value.trim();
@@ -1000,7 +1016,10 @@
             });
 
             cetakStrukMulti(no, waktu, pelanggan, keranjangBelanja, document.getElementById('trxTotalSemua').value, metode);
-            setTimeout(() => { setFormTrx(); }, 1000);
+            setTimeout(() => { 
+                setFormTrx(); 
+                resetFormModul('transaksi');
+            }, 1000);
         }
 
         function editTransaksi(no_trx) {
@@ -1142,10 +1161,6 @@
 
             db.ref('warung/pengeluaran_pribadi/' + id).set(dataPribadi).then(() => {
                 alert("Pengeluaran pribadi berhasil disimpan!");
-                document.getElementById('pribadiNama').value = '';
-                document.getElementById('pribadiNominal').value = '';
-                document.getElementById('pribadiPilihan').value = 'Lisa';
-                cekPilihanPribadi();
             });
         }
 
@@ -1258,10 +1273,6 @@
 
             db.ref('warung/belanja/' + id).set(dataBlj).then(() => {
                 alert("Daftar belanja berhasil disimpan!");
-                document.getElementById('belanjaNama').value = '';
-                document.getElementById('belanjaQty').value = '1';
-                document.getElementById('belanjaBiaya').value = '';
-                document.getElementById('belanjaKet').value = '';
             });
         }
 
